@@ -15,10 +15,10 @@
 require("dotenv").config();          // loads the .env file into process.env
 const express = require("express"); // the web server framework
 const crypto = require("crypto");   // built-in, used for browser fingerprint
-
+const path = require("path");
 const app = express();
 app.use(express.json());            // lets us read JSON sent by the browser
-app.use(express.static("public"));  // serves the checkout page (public folder)
+app.use(express.static(path.join(__dirname, "public")));  // serves the checkout page (public folder)
 
 // ---- Read credentials from .env (never hard-code secrets) ----
 const {
