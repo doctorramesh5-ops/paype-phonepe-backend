@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayPe · UAT Checkout</title>
+<style>
+  :root{
+    --ink:#141026; --violet:#5B2EDD; --violet-dark:#3E1FA0;
+    --mist:#F3F1FB; --line:#E2DDF3; --amber:#B45309; --amber-bg:#FEF3C7;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Segoe UI", system-ui, -apple-system, sans-serif;
+    background:var(--mist); color:var(--ink);
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:24px;
+  }
+  .sandbox-strip{
+    position:fixed; top:0; left:0; right:0; text-align:center;
+    background:var(--amber-bg); color:var(--amber);
+    font-size:12px; font-weight:600; letter-spacing:.08em;
+    text-transform:uppercase; padding:6px;
+  }
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:16px;
+    width:100%; max-width:400px; padding:32px;
+    box-shadow:0 10px 30px rgba(62,31,160,.08);
+  }
+  .brand{display:flex; align-items:baseline; gap:8px; margin-bottom:6px;}
+  .brand h1{font-size:26px; font-weight:800; color:var(--violet-dark); letter-spacing:-.02em;}
+  .brand span{font-size:12px; color:#7A7396;}
+  .sub{font-size:14px; color:#59527A; margin-bottom:28px;}
+  label{display:block; font-size:13px; font-weight:600; margin-bottom:8px;}
+  .amount-wrap{display:flex; align-items:center; border:1.5px solid var(--line);
+    border-radius:10px; overflow:hidden; margin-bottom:20px;}
+  .amount-wrap:focus-within{border-color:var(--violet);}
+  .amount-wrap .rupee{padding:0 12px; font-size:18px; color:#7A7396; background:var(--mist);
+    align-self:stretch; display:flex; align-items:center;}
+  input[type=number]{flex:1; border:0; outline:0; font-size:18px; padding:14px 12px;}
+  button{
+    width:100%; padding:15px; font-size:16px; font-weight:700;
+    color:#fff; background:var(--violet); border:0; border-radius:10px;
+    cursor:pointer; transition:background .15s ease;
+  }
+  button:hover{background:var(--violet-dark);}
+  button:focus-visible{outline:3px solid var(--violet-dark); outline-offset:2px;}
+  button:disabled{opacity:.6; cursor:wait;}
+  .msg{margin-top:16px; font-size:13px; line-height:1.5; color:#59527A; min-height:20px;}
+  .msg.error{color:#B3261E;}
+</style>
+</head>
+<body>
+
+<div class="sandbox-strip">PhonePe UAT Sandbox — test payments only</div>
+
+<div class="card">
+  <div class="brand">
+    <h1>PayPe</h1>
+    <span>Technologies · Coimbatore</span>
+  </div>
+  <p class="sub">Test order — pay securely through PhonePe</p>
+
+  <label for="amount">Amount to pay</label>
+  <div class="amount-wrap">
+    <span class="rupee">₹</span>
+    <input type="number" id="amount" value="10" min="1" step="1" />
+  </div>
+
+  <button id="payBtn" onclick="startPayment()">Pay with PhonePe</button>
+  <p class="msg" id="msg"></p>
+</div>
+
+<script>
+// When the customer clicks Pay:
+// 1. Send the amount to OUR backend (/api/create-payment)
+// 2. Backend talks to PhonePe and returns their checkout URL
+// 3. We send the customer to that URL
+async function startPayment() {
+  const btn = document.getElementById("payBtn");
+  const msg = document.getElementById("msg");
+  const amount = document.getElementById("amount").value;
+
+  btn.disabled = true;
+  msg.className = "msg";
+  msg.textContent = "Creating your payment…";
+
+  try {
+    const res = await fetch("/api/create-payment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount }),
+    });
+    const data = await res.json();
+
+    if (data.redirectUrl) {
+      msg.textContent = "Redirecting to PhonePe…";
+      window.location.href = data.redirectUrl; // off to PhonePe's page
+    } else {
+      msg.className = "msg error";
+      msg.textContent = "Payment could not be created. Check the server logs.";
+      btn.disabled = false;
+    }
+  } catch (e) {
+    msg.className = "msg error";
+    msg.textContent = "Could not reach the server. Is it running?";
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

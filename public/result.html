@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayPe · Payment Result</title>
+<style>
+  :root{--ink:#141026; --violet:#5B2EDD; --violet-dark:#3E1FA0; --mist:#F3F1FB; --line:#E2DDF3;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Segoe UI", system-ui, sans-serif; background:var(--mist); color:var(--ink);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .card{background:#fff; border:1px solid var(--line); border-radius:16px;
+    width:100%; max-width:400px; padding:36px 32px; text-align:center;
+    box-shadow:0 10px 30px rgba(62,31,160,.08);}
+  .icon{font-size:52px; margin-bottom:12px;}
+  h1{font-size:22px; margin-bottom:8px;}
+  .state-COMPLETED h1{color:#166534;}
+  .state-FAILED h1{color:#B3261E;}
+  .state-PENDING h1{color:#B45309;}
+  p{font-size:14px; color:#59527A; line-height:1.6;}
+  .order{margin-top:14px; font-size:12px; color:#7A7396; word-break:break-all;}
+  a{display:inline-block; margin-top:22px; color:var(--violet-dark); font-weight:600;}
+</style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="icon" id="icon">⏳</div>
+  <h1 id="title">Checking payment status…</h1>
+  <p id="detail">Please wait a moment.</p>
+  <p class="order" id="order"></p>
+  <a href="/">← Back to checkout</a>
+</div>
+
+<script>
+// Read the orderId from the URL (?orderId=PAYPE...)
+const orderId = new URLSearchParams(window.location.search).get("orderId");
+
+const views = {
+  COMPLETED: { icon:"✅", title:"Payment successful", detail:"The UAT transaction completed. Success flow verified!" },
+  FAILED:    { icon:"❌", title:"Payment failed",     detail:"The UAT transaction failed. Failure flow verified!" },
+  PENDING:   { icon:"⏳", title:"Payment pending",    detail:"PhonePe is still processing. Pending flow verified — status will update via webhook or re-check." },
+};
+
+async function checkStatus() {
+  if (!orderId) {
+    document.getElementById("title").textContent = "No order ID found";
+    return;
+  }
+  document.getElementById("order").textContent = "Order: " + orderId;
+
+  try {
+    const res = await fetch("/api/order-status/" + orderId);
+    const data = await res.json();
+    const v = views[data.state] || { icon:"❓", title:"Status: " + (data.state || "unknown"), detail:"See server logs for the full response." };
+    document.getElementById("icon").textContent = v.icon;
+    document.getElementById("title").textContent = v.title;
+    document.getElementById("detail").textContent = v.detail;
+    document.getElementById("card").className = "card state-" + data.state;
+  } catch {
+    document.getElementById("title").textContent = "Could not fetch status";
+    document.getElementById("detail").textContent = "Make sure the server is running, then refresh this page.";
+  }
+}
+checkStatus();
+</script>
+</body>
+</html>
