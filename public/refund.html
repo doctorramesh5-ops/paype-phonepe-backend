@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayPe · Refund Test</title>
+<style>
+  :root{--ink:#141026; --violet:#5B2EDD; --violet-dark:#3E1FA0; --mist:#F3F1FB; --line:#E2DDF3;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Segoe UI", system-ui, sans-serif; background:var(--mist); color:var(--ink);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .card{background:#fff; border:1px solid var(--line); border-radius:16px;
+    width:100%; max-width:420px; padding:32px; box-shadow:0 10px 30px rgba(62,31,160,.08);}
+  h1{font-size:22px; color:var(--violet-dark); margin-bottom:4px;}
+  .sub{font-size:13px; color:#59527A; margin-bottom:24px;}
+  label{display:block; font-size:13px; font-weight:600; margin:14px 0 6px;}
+  input{width:100%; border:1.5px solid var(--line); border-radius:10px; padding:12px; font-size:15px; outline:0;}
+  input:focus{border-color:var(--violet);}
+  button{width:100%; margin-top:20px; padding:14px; font-size:15px; font-weight:700;
+    color:#fff; background:var(--violet); border:0; border-radius:10px; cursor:pointer;}
+  button:hover{background:var(--violet-dark);}
+  button:disabled{opacity:.6;}
+  pre{margin-top:18px; background:#F7F5FD; border:1px solid var(--line); border-radius:10px;
+    padding:12px; font-size:12px; white-space:pre-wrap; word-break:break-all; max-height:260px; overflow:auto;}
+  a{display:inline-block; margin-top:16px; color:var(--violet-dark); font-weight:600; font-size:13px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Refund Test</h1>
+  <p class="sub">Initiate a refund against a COMPLETED UAT order</p>
+  <label for="orderId">Original Merchant Order ID</label>
+  <input id="orderId" placeholder="PAYPE17834..." />
+  <label for="amount">Refund amount (₹)</label>
+  <input id="amount" type="number" value="10" min="1" />
+  <button id="btn" onclick="doRefund()">Initiate Refund</button>
+  <pre id="out">PhonePe's response will appear here…</pre>
+  <a href="/">← Back to checkout</a>
+</div>
+<script>
+async function doRefund() {
+  const btn = document.getElementById("btn");
+  const out = document.getElementById("out");
+  btn.disabled = true;
+  out.textContent = "Initiating refund…";
+  try {
+    const res = await fetch("/api/refund", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        merchantOrderId: document.getElementById("orderId").value.trim(),
+        amount: document.getElementById("amount").value,
+      }),
+    });
+    const data = await res.json();
+    out.textContent = JSON.stringify(data, null, 2);
+    if (data.merchantRefundId) {
+      setTimeout(async () => {
+        const s = await fetch("/api/refund-status/" + data.merchantRefundId);
+        const sd = await s.json();
+        out.textContent += "\n\n--- Status after 5s ---\n" + JSON.stringify(sd, null, 2);
+      }, 5000);
+    }
+  } catch (e) {
+    out.textContent = "Error: " + e.message;
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>

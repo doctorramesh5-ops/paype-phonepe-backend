@@ -1,82 +1,47 @@
-// ============================================================
-//  PayPe x PhonePe TSP — UAT Test Server
-//  ----------------------------------------------------------
-//  This is your backend. It does 4 jobs:
-//    1. Get an auth token from PhonePe        (getAuthToken)
-//    2. Create a payment                       (POST /api/create-payment)
-//    3. Check payment status                   (GET  /api/order-status/...)
-//    4. Receive webhook updates from PhonePe   (POST /api/phonepe-webhook)
-//
-//  Why a backend at all? Because the clientSecret must NEVER
-//  be visible in the browser. The browser talks to THIS server,
-//  and this server talks to PhonePe.
-// ============================================================
-
-require("dotenv").config();          // loads the .env file into process.env
-const express = require("express"); // the web server framework
-const crypto = require("crypto");   // built-in, used for browser fingerprint
+// PayPe x PhonePe TSP — Payment Server v3
+require("dotenv").config();
+const express = require("express");
+const crypto = require("crypto");
 const path = require("path");
-const app = express();
-app.use(express.json());            // lets us read JSON sent by the browser
-app.use(express.static(path.join(__dirname, "public")));  // serves the checkout page (public folder)
+const db = require("./db");
 
-// ---- Read credentials from .env (never hard-code secrets) ----
+const app = express();
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
+
 const {
-  PHONEPE_CLIENT_ID,
-  PHONEPE_CLIENT_VERSION,
-  PHONEPE_CLIENT_SECRET,
-  PHONEPE_MERCHANT_ID,
-  PHONEPE_BASE_URL,
-  MERCHANT_DOMAIN,
-  PORT = 3000,
+  PHONEPE_CLIENT_ID, PHONEPE_CLIENT_VERSION, PHONEPE_CLIENT_SECRET,
+  PHONEPE_MERCHANT_ID, PHONEPE_BASE_URL, MERCHANT_DOMAIN, PORT = 3000,
 } = process.env;
 
-// ============================================================
-//  STEP 1 — AUTH TOKEN
-//  PhonePe docs: POST /v1/oauth/token (form-urlencoded)
-//  The token is reusable until "expires_at", so we cache it.
-// ============================================================
+// AUTH TOKEN (cached, refreshed ~4 min before expiry)
 let cachedToken = null;
-let tokenExpiresAt = 0; // epoch seconds
+let tokenExpiresAt = 0;
 
 async function getAuthToken() {
   const now = Math.floor(Date.now() / 1000);
-
-  // Reuse the cached token if it's still valid (with a 120s safety margin)
-  if (cachedToken && now < tokenExpiresAt - 120) {
-    return cachedToken;
-  }
-
-  const body = new URLSearchParams({
-    client_id: PHONEPE_CLIENT_ID,
-    client_version: PHONEPE_CLIENT_VERSION,
-    client_secret: PHONEPE_CLIENT_SECRET,
-    grant_type: "client_credentials",
-  });
-
+  if (cachedToken && now < tokenExpiresAt - 240) return cachedToken;
   const res = await fetch(`${PHONEPE_BASE_URL}/v1/oauth/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
+    body: new URLSearchParams({
+      client_id: PHONEPE_CLIENT_ID,
+      client_version: PHONEPE_CLIENT_VERSION,
+      client_secret: PHONEPE_CLIENT_SECRET,
+      grant_type: "client_credentials",
+    }),
   });
-
   const data = await res.json();
   if (!res.ok || !data.access_token) {
     console.error("❌ Auth failed:", data);
     throw new Error("PhonePe auth token request failed");
   }
-
   cachedToken = data.access_token;
   tokenExpiresAt = data.expires_at;
-  console.log("✅ Got new PhonePe auth token (valid until", new Date(tokenExpiresAt * 1000).toLocaleString(), ")");
+  console.log("✅ Got new PhonePe auth token");
   return cachedToken;
 }
 
-// ============================================================
-//  TSP HEADERS
-//  PhonePe TSP docs: these headers are MANDATORY on /checkout/v2/pay
-//  In production, X-MERCHANT-ID becomes each real client's MID.
-// ============================================================
 function tspHeaders(token, req) {
   return {
     "Content-Type": "application/json",
@@ -84,45 +49,35 @@ function tspHeaders(token, req) {
     "X-MERCHANT-ID": PHONEPE_MERCHANT_ID,
     "X-SOURCE": "API",
     "X-SOURCE-CHANNEL": "web",
-    "X-BROWSER-FINGERPRINT": crypto
-      .createHash("md5")
-      .update(req.headers["user-agent"] || "unknown")
-      .digest("hex"),
-    "USER-AGENT": req.headers["user-agent"] || "PayPe-UAT-Test",
+    "X-BROWSER-FINGERPRINT": crypto.createHash("md5")
+      .update((req && req.headers["user-agent"]) || "paype-server").digest("hex"),
+    "USER-AGENT": (req && req.headers["user-agent"]) || "PayPe-Server",
     "X-MERCHANT-DOMAIN": MERCHANT_DOMAIN,
-    "X-MERCHANT-IP": req.ip || "127.0.0.1",
+    "X-MERCHANT-IP": (req && req.ip) || "127.0.0.1",
     "X-SOURCE-REDIRECTION-TYPE": "MERCHANT_REDIRECTION",
   };
 }
 
-// ============================================================
-//  STEP 2 — CREATE PAYMENT
-//  Browser sends { amount } in rupees → we convert to paise,
-//  call PhonePe /checkout/v2/pay, and return their redirectUrl.
-// ============================================================
+// CREATE PAYMENT — saves order as PENDING in Firestore
 app.post("/api/create-payment", async (req, res) => {
   try {
     const amountRupees = Number(req.body.amount);
     if (!amountRupees || amountRupees <= 0) {
       return res.status(400).json({ error: "Please send a valid amount" });
     }
-
     const token = await getAuthToken();
-
-    // Every order needs a unique ID — we generate one with the time
     const merchantOrderId = "PAYPE" + Date.now();
+    const amountPaise = Math.round(amountRupees * 100);
 
     const payload = {
       merchantOrderId,
-      amount: Math.round(amountRupees * 100), // PhonePe wants PAISE (₹10 = 1000)
-      expireAfter: 1200,                      // order valid for 20 minutes
-      metaInfo: { udf1: "paype-uat-test" },
+      amount: amountPaise,
+      expireAfter: 1200,
+      metaInfo: { udf1: "paype-order" },
       paymentFlow: {
         type: "PG_CHECKOUT",
-        message: "PayPe UAT test payment",
+        message: "PayPe payment",
         merchantUrls: {
-          // Where PhonePe sends the customer AFTER payment
-          // BASE_URL comes from Vercel settings once deployed; falls back to localhost
           redirectUrl: `${process.env.BASE_URL || "http://localhost:" + PORT}/result.html?orderId=${merchantOrderId}`,
         },
       },
@@ -133,15 +88,20 @@ app.post("/api/create-payment", async (req, res) => {
       headers: tspHeaders(token, req),
       body: JSON.stringify(payload),
     });
-
     const data = await ppRes.json();
-    console.log("💳 Create payment response:", JSON.stringify(data, null, 2));
+    console.log("💳 Create payment:", merchantOrderId, "→", data.state || data);
 
     if (!ppRes.ok || !data.redirectUrl) {
       return res.status(502).json({ error: "PhonePe pay API failed", details: data });
     }
 
-    // Send PhonePe's checkout page URL back to the browser
+    await db.saveOrder({
+      merchantOrderId,
+      phonepeOrderId: data.orderId,
+      amount: amountPaise,
+      state: "PENDING",
+    });
+
     res.json({ merchantOrderId, redirectUrl: data.redirectUrl });
   } catch (err) {
     console.error("❌ create-payment error:", err.message);
@@ -149,18 +109,139 @@ app.post("/api/create-payment", async (req, res) => {
   }
 });
 
-// ============================================================
-//  STEP 3 — ORDER STATUS
-//  Docs: GET /checkout/v2/order/{merchantOrderId}/status
-//  Only Authorization + X-MERCHANT-ID headers are needed here.
-// ============================================================
+// Shared: fetch status from PhonePe, update DB (root-level state only)
+async function fetchAndStoreOrderStatus(merchantOrderId) {
+  const token = await getAuthToken();
+  const ppRes = await fetch(
+    `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `O-Bearer ${token}`,
+        "X-MERCHANT-ID": PHONEPE_MERCHANT_ID,
+      },
+    }
+  );
+  const data = await ppRes.json();
+  const state = data.state;
+  if (state) await db.updateOrder(merchantOrderId, { state });
+  return data;
+}
+
 app.get("/api/order-status/:merchantOrderId", async (req, res) => {
   try {
-    const token = await getAuthToken();
-    const { merchantOrderId } = req.params;
+    const data = await fetchAndStoreOrderStatus(req.params.merchantOrderId);
+    console.log("🔍 Order status:", req.params.merchantOrderId, "→", data.state);
+    res.json(data);
+  } catch (err) {
+    console.error("❌ order-status error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
+// RECONCILIATION — external cron calls this every minute
+app.get("/api/reconcile", async (req, res) => {
+  if (req.query.key !== process.env.RECONCILE_SECRET) {
+    return res.status(401).json({ error: "unauthorized" });
+  }
+  try {
+    const pending = await db.getPendingOrders();
+    const results = [];
+    for (const order of pending) {
+      const data = await fetchAndStoreOrderStatus(order.merchantOrderId);
+      results.push({ merchantOrderId: order.merchantOrderId, state: data.state });
+      console.log("🔁 Reconcile:", order.merchantOrderId, "→", data.state);
+    }
+    res.json({ checked: results.length, results });
+  } catch (err) {
+    console.error("❌ reconcile error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// WEBHOOK — authenticated: Authorization = SHA256(username:password)
+app.post("/api/phonepe-webhook", async (req, res) => {
+  const expected = crypto.createHash("sha256")
+    .update(`${process.env.WEBHOOK_USERNAME}:${process.env.WEBHOOK_PASSWORD}`)
+    .digest("hex");
+  const received = (req.headers["authorization"] || "")
+    .replace(/^SHA256\s*/i, "").trim();
+
+  if (received.toLowerCase() !== expected.toLowerCase()) {
+    console.log("🚫 Webhook REJECTED: credentials did not match");
+    return res.status(401).json({ error: "unauthorized" });
+  }
+
+  const event = req.body.event;
+  const payload = req.body.payload || {};
+  const state = payload.state;
+  console.log("🔔 VERIFIED webhook:", event, "→", payload.merchantOrderId || payload.merchantRefundId, state);
+
+  try {
+    if (event && event.startsWith("checkout.order") && payload.merchantOrderId) {
+      await db.updateOrder(payload.merchantOrderId, { state, lastWebhookEvent: event });
+    }
+    if (event && event.startsWith("pg.refund") && payload.merchantRefundId) {
+      await db.updateRefund(payload.merchantRefundId, { state, lastWebhookEvent: event });
+    }
+  } catch (err) {
+    console.error("⚠️ webhook DB update failed:", err.message);
+  }
+
+  res.status(200).json({ received: true });
+});
+
+// REFUND — POST /payments/v2/refund
+app.post("/api/refund", async (req, res) => {
+  try {
+    const { merchantOrderId, amount } = req.body;
+    const amountPaise = Math.round(Number(amount) * 100);
+    if (!merchantOrderId || !amountPaise || amountPaise <= 0) {
+      return res.status(400).json({ error: "merchantOrderId and valid amount required" });
+    }
+    const token = await getAuthToken();
+    const merchantRefundId = "REFUND" + Date.now();
+
+    const ppRes = await fetch(`${PHONEPE_BASE_URL}/payments/v2/refund`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `O-Bearer ${token}`,
+        "X-MERCHANT-ID": PHONEPE_MERCHANT_ID,
+      },
+      body: JSON.stringify({
+        merchantRefundId,
+        originalMerchantOrderId: merchantOrderId,
+        amount: amountPaise,
+      }),
+    });
+    const data = await ppRes.json();
+    console.log("💸 Refund initiated:", merchantRefundId, "→", data.state || data);
+
+    if (!ppRes.ok) {
+      return res.status(502).json({ error: "PhonePe refund API failed", details: data });
+    }
+
+    await db.saveRefund({
+      merchantRefundId,
+      originalMerchantOrderId: merchantOrderId,
+      amount: amountPaise,
+      state: data.state || "PENDING",
+      phonepeRefundId: data.refundId,
+    });
+
+    res.json({ merchantRefundId, ...data });
+  } catch (err) {
+    console.error("❌ refund error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/refund-status/:merchantRefundId", async (req, res) => {
+  try {
+    const token = await getAuthToken();
     const ppRes = await fetch(
-      `${PHONEPE_BASE_URL}/checkout/v2/order/${merchantOrderId}/status`,
+      `${PHONEPE_BASE_URL}/payments/v2/refund/${req.params.merchantRefundId}/status`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -169,53 +250,19 @@ app.get("/api/order-status/:merchantOrderId", async (req, res) => {
         },
       }
     );
-
     const data = await ppRes.json();
-    console.log("🔍 Order status:", merchantOrderId, "→", data.state);
+    if (data.state) await db.updateRefund(req.params.merchantRefundId, { state: data.state });
+    console.log("🔍 Refund status:", req.params.merchantRefundId, "→", data.state);
     res.json(data);
   } catch (err) {
-    console.error("❌ order-status error:", err.message);
+    console.error("❌ refund-status error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ============================================================
-//  STEP 4 — WEBHOOK RECEIVER
-//  PhonePe will POST payment updates here (once you register
-//  this URL using their Create Webhook API). For now we just
-//  log whatever arrives and reply 200 OK.
-// ============================================================
-app.post("/api/phonepe-webhook", (req, res) => {
-  // SECURITY GUARD: is this knock really from PhonePe?
-  // PhonePe sends Authorization = SHA256 hash of "username:password"
-  const expected = crypto
-    .createHash("sha256")
-    .update(`${process.env.WEBHOOK_USERNAME}:${process.env.WEBHOOK_PASSWORD}`)
-    .digest("hex");
-
-  const received = (req.headers["authorization"] || "")
-    .replace(/^SHA256\s*/i, "")
-    .trim();
-
-  if (received.toLowerCase() !== expected.toLowerCase()) {
-    console.log("🚫 Webhook REJECTED: credentials did not match");
-    return res.status(401).json({ error: "unauthorized" });
-  }
-
-  console.log("🔔 VERIFIED webhook from PhonePe:");
-  console.log(JSON.stringify(req.body, null, 2));
-  res.status(200).json({ received: true });
-});
-
-// ---- Start the server ----
-// On your MacBook: this starts listening on port 3000.
-// On Vercel: Vercel imports the app itself, so we just export it.
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log("");
-    console.log("🚀 PayPe UAT server running → http://localhost:" + PORT);
-    console.log("   Open that link in your browser to see the test checkout.");
-    console.log("");
+    console.log("\n🚀 PayPe server v3 running → http://localhost:" + PORT + "\n");
   });
 }
 module.exports = app;
