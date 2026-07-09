@@ -186,7 +186,23 @@ app.get("/api/order-status/:merchantOrderId", async (req, res) => {
 //  log whatever arrives and reply 200 OK.
 // ============================================================
 app.post("/api/phonepe-webhook", (req, res) => {
-  console.log("🔔 WEBHOOK received from PhonePe:");
+  // SECURITY GUARD: is this knock really from PhonePe?
+  // PhonePe sends Authorization = SHA256 hash of "username:password"
+  const expected = crypto
+    .createHash("sha256")
+    .update(`${process.env.WEBHOOK_USERNAME}:${process.env.WEBHOOK_PASSWORD}`)
+    .digest("hex");
+
+  const received = (req.headers["authorization"] || "")
+    .replace(/^SHA256\s*/i, "")
+    .trim();
+
+  if (received.toLowerCase() !== expected.toLowerCase()) {
+    console.log("🚫 Webhook REJECTED: credentials did not match");
+    return res.status(401).json({ error: "unauthorized" });
+  }
+
+  console.log("🔔 VERIFIED webhook from PhonePe:");
   console.log(JSON.stringify(req.body, null, 2));
   res.status(200).json({ received: true });
 });
