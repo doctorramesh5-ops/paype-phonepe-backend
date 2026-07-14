@@ -89,7 +89,10 @@ async function startPayment() {
     const res = await fetch("/api/create-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({
+        amount,
+        merchantId: new URLSearchParams(window.location.search).get("merchant") || "",
+      }),
     });
     const data = await res.json();
 
