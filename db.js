@@ -78,3 +78,22 @@ async function getRecentRefunds(limit = 100) {
 
 module.exports.getRecentOrders = getRecentOrders;
 module.exports.getRecentRefunds = getRecentRefunds;
+
+// ---- Refund validation lookups ----
+async function getOrder(merchantOrderId) {
+  const d = getDb();
+  if (!d) return null;
+  const doc = await d.collection("orders").doc(merchantOrderId).get();
+  return doc.exists ? doc.data() : null;
+}
+
+async function getRefundsForOrder(merchantOrderId) {
+  const d = getDb();
+  if (!d) return null; // null = "database unavailable", different from [] = "no refunds"
+  const snap = await d.collection("refunds")
+    .where("originalMerchantOrderId", "==", merchantOrderId).get();
+  return snap.docs.map((doc) => doc.data());
+}
+
+module.exports.getOrder = getOrder;
+module.exports.getRefundsForOrder = getRefundsForOrder;

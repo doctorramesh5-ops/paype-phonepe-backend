@@ -201,6 +201,37 @@ app.post("/api/refund", async (req, res) => {
     if (!merchantOrderId || !amountPaise || amountPaise <= 0) {
       return res.status(400).json({ error: "merchantOrderId and valid amount required" });
     }
+
+    // ===== VALIDATION: never trust input, verify our own records =====
+    // Rule 1: the order must exist in OUR database
+    const order = await db.getOrder(merchantOrderId);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found in our records" });
+    }
+    // Rule 2: only COMPLETED orders can be refunded
+    if (order.state !== "COMPLETED") {
+      return res.status(400).json({ error: `Order state is ${order.state} - only COMPLETED orders can be refunded` });
+    }
+    // Rule 3: total refunds must never exceed the order amount
+    const previousRefunds = await db.getRefundsForOrder(merchantOrderId);
+    if (previousRefunds === null) {
+      // fail CLOSED: if we cannot verify, we do not move money
+      return res.status(503).json({ error: "Refund history unavailable - try again shortly" });
+    }
+    const alreadyRefunded = previousRefunds
+      .filter(r => r.state !== "FAILED")
+      .reduce((sum, r) => sum + (r.amount || 0), 0);
+    const remaining = order.amount - alreadyRefunded;
+    if (amountPaise > remaining) {
+      return res.status(400).json({
+        error: "Refund exceeds refundable balance",
+        orderAmount: order.amount,
+        alreadyRefunded,
+        remainingRefundable: remaining,
+      });
+    }
+    // ===== validation passed - proceed =====
+
     const token = await getAuthToken();
     const merchantRefundId = "REFUND" + Date.now();
 
