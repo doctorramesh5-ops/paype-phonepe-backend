@@ -97,3 +97,39 @@ async function getRefundsForOrder(merchantOrderId) {
 
 module.exports.getOrder = getOrder;
 module.exports.getRefundsForOrder = getRefundsForOrder;
+
+// ---- Merchants: PayPe's client registry ----
+async function saveMerchant(merchant) {
+  const d = getDb();
+  if (!d) throw new Error("database unavailable");
+  await d.collection("merchants").doc(merchant.merchantId).set({
+    ...merchant, createdAt: Date.now(), updatedAt: Date.now(),
+  });
+}
+
+async function getMerchants(limit = 200) {
+  const d = getDb();
+  if (!d) return [];
+  const snap = await d.collection("merchants").orderBy("createdAt", "desc").limit(limit).get();
+  return snap.docs.map((doc) => doc.data());
+}
+
+async function getMerchant(merchantId) {
+  const d = getDb();
+  if (!d) return null;
+  const doc = await d.collection("merchants").doc(merchantId).get();
+  return doc.exists ? doc.data() : null;
+}
+
+async function updateMerchant(merchantId, fields) {
+  const d = getDb();
+  if (!d) throw new Error("database unavailable");
+  await d.collection("merchants").doc(merchantId).set(
+    { ...fields, updatedAt: Date.now() }, { merge: true }
+  );
+}
+
+module.exports.saveMerchant = saveMerchant;
+module.exports.getMerchants = getMerchants;
+module.exports.getMerchant = getMerchant;
+module.exports.updateMerchant = updateMerchant;
