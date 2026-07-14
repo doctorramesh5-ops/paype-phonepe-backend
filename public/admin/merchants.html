@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayPe · Merchants</title>
+<style>
+  :root{--ink:#141026; --violet:#5B2EDD; --violet-dark:#3E1FA0; --mist:#F3F1FB; --line:#E2DDF3;
+    --green:#166534; --green-bg:#DCFCE7; --red:#B3261E; --red-bg:#FEE2E2;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Segoe UI", system-ui, sans-serif; background:var(--mist); color:var(--ink); min-height:100vh;}
+  header{background:#fff; border-bottom:1px solid var(--line); padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+  .brand{font-size:20px; font-weight:800; color:var(--violet-dark);}
+  nav a{margin-right:16px; text-decoration:none; color:#59527A; font-size:14px; font-weight:600;}
+  nav a.active{color:var(--violet-dark); border-bottom:2px solid var(--violet);}
+  .logout{background:none; border:1.5px solid var(--line); border-radius:8px; padding:8px 16px;
+    font-size:13px; font-weight:600; color:#59527A; cursor:pointer;}
+  main{max-width:1000px; margin:0 auto; padding:24px 16px 60px;}
+  .panel{background:#fff; border:1px solid var(--line); border-radius:12px; padding:22px; margin-bottom:24px;}
+  h2{font-size:16px; margin-bottom:14px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px;}
+  label{display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:#59527A;}
+  input{width:100%; border:1.5px solid var(--line); border-radius:8px; padding:10px; font-size:14px; outline:0;}
+  input:focus{border-color:var(--violet);}
+  .actions{margin-top:16px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+  button.primary{padding:11px 22px; font-size:14px; font-weight:700; color:#fff;
+    background:var(--violet); border:0; border-radius:8px; cursor:pointer;}
+  button.primary:hover{background:var(--violet-dark);}
+  button.primary:disabled{opacity:.6;}
+  .msg{font-size:13px; min-height:18px;}
+  .msg.ok{color:var(--green);} .msg.err{color:var(--red);}
+  .toolbar{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap;}
+  .search{max-width:280px;}
+  .tablewrap{background:#fff; border:1px solid var(--line); border-radius:12px; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:760px;}
+  th{text-align:left; padding:10px 14px; color:#59527A; font-weight:600; border-bottom:1px solid var(--line);
+    font-size:11px; text-transform:uppercase; letter-spacing:.05em;}
+  td{padding:10px 14px; border-bottom:1px solid #F0EDFA;}
+  tr:last-child td{border-bottom:0;}
+  .chip{display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700;}
+  .ACTIVE{background:var(--green-bg); color:var(--green);}
+  .SUSPENDED{background:var(--red-bg); color:var(--red);}
+  .toggle{background:none; border:1px solid var(--line); border-radius:6px; padding:5px 10px;
+    font-size:12px; cursor:pointer; color:#59527A;}
+  .toggle:hover{border-color:var(--violet); color:var(--violet-dark);}
+  .empty{padding:24px; text-align:center; color:#7A7396; font-size:13px;}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex; align-items:center; gap:26px;">
+    <div class="brand">PayPe Admin</div>
+    <nav>
+      <a href="/admin/dashboard.html">Dashboard</a>
+      <a href="/admin/merchants.html" class="active">Merchants</a>
+    </nav>
+  </div>
+  <button class="logout" onclick="logout()">Log out</button>
+</header>
+<main>
+  <div class="panel">
+    <h2>Onboard a merchant</h2>
+    <div class="grid">
+      <div><label>Business name *</label><input id="fName" placeholder="Sri Lakshmi Stores" /></div>
+      <div><label>PhonePe MID *</label><input id="fMid" placeholder="TSPPAYPE (UAT) / real MID (prod)" /></div>
+      <div><label>Website domain *</label><input id="fDomain" placeholder="https://www.example.com" /></div>
+      <div><label>Contact person</label><input id="fContact" placeholder="Owner name" /></div>
+      <div><label>Email</label><input id="fEmail" placeholder="owner@example.com" /></div>
+      <div><label>Phone</label><input id="fPhone" placeholder="+91 98xxxxxx" /></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="addBtn" onclick="addMerchant()">Onboard merchant</button>
+      <span class="msg" id="formMsg"></span>
+    </div>
+  </div>
+  <div class="toolbar">
+    <h2 style="margin:0">Merchants <span id="count" style="color:#7A7396; font-weight:400"></span></h2>
+    <input class="search" id="search" placeholder="Search name, MID, domain…" oninput="render()" />
+  </div>
+  <div class="tablewrap">
+    <table id="tbl">
+      <thead><tr>
+        <th>Merchant ID</th><th>Business</th><th>MID</th><th>Domain</th>
+        <th>Contact</th><th>Status</th><th>Onboarded</th><th></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="empty" id="empty" style="display:none">No merchants yet — onboard your first one above</div>
+  </div>
+</main>
+<script>
+let merchants = [];
+const fmtTime = (ms) => ms ? new Date(ms).toLocaleDateString("en-IN", { dateStyle:"medium" }) : "";
+
+async function load() {
+  const res = await fetch("/api/admin/merchants");
+  if (res.status === 401) { window.location.href = "/admin/login.html"; return; }
+  merchants = (await res.json()).merchants || [];
+  render();
+}
+
+function render() {
+  const q = (document.getElementById("search").value || "").toLowerCase();
+  const rows = merchants.filter(m =>
+    !q || [m.businessName, m.mid, m.domain, m.merchantId].join(" ").toLowerCase().includes(q)
+  );
+  document.getElementById("count").textContent = "(" + rows.length + ")";
+  const body = document.querySelector("#tbl tbody");
+  body.innerHTML = rows.map(m => `<tr>
+    <td>${m.merchantId}</td>
+    <td><strong>${m.businessName}</strong></td>
+    <td>${m.mid}</td>
+    <td>${m.domain}</td>
+    <td>${m.contactName || "—"}${m.email ? "<br><span style='color:#7A7396;font-size:11px'>" + m.email + "</span>" : ""}</td>
+    <td><span class="chip ${m.status}">${m.status}</span></td>
+    <td>${fmtTime(m.createdAt)}</td>
+    <td><button class="toggle" onclick="toggleStatus('${m.merchantId}','${m.status}')">
+      ${m.status === "ACTIVE" ? "Suspend" : "Activate"}</button></td>
+  </tr>`).join("");
+  document.getElementById("empty").style.display = rows.length ? "none" : "block";
+}
+
+async function addMerchant() {
+  const btn = document.getElementById("addBtn");
+  const msg = document.getElementById("formMsg");
+  btn.disabled = true; msg.className = "msg"; msg.textContent = "Onboarding…";
+  try {
+    const res = await fetch("/api/admin/merchants", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessName: document.getElementById("fName").value,
+        mid: document.getElementById("fMid").value,
+        domain: document.getElementById("fDomain").value,
+        contactName: document.getElementById("fContact").value,
+        email: document.getElementById("fEmail").value,
+        phone: document.getElementById("fPhone").value,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      msg.className = "msg ok"; msg.textContent = "✅ " + data.merchant.businessName + " onboarded (" + data.merchant.merchantId + ")";
+      ["fName","fMid","fDomain","fContact","fEmail","fPhone"].forEach(id => document.getElementById(id).value = "");
+      load();
+    } else {
+      msg.className = "msg err"; msg.textContent = data.error || "Failed";
+    }
+  } catch {
+    msg.className = "msg err"; msg.textContent = "Could not reach the server";
+  }
+  btn.disabled = false;
+}
+
+async function toggleStatus(id, current) {
+  const next = current === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+  await fetch(`/api/admin/merchants/${id}/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: next }),
+  });
+  load();
+}
+
+async function logout() {
+  await fetch("/api/admin/logout", { method: "POST" });
+  window.location.href = "/admin/login.html";
+}
+
+load();
+</script>
+</body>
+</html>
