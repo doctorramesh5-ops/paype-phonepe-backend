@@ -44,11 +44,11 @@ async function getAuthToken() {
   return cachedToken;
 }
 
-function tspHeaders(token, req) {
+function tspHeaders(token, req, overrides = {}) {
   return {
     "Content-Type": "application/json",
     "Authorization": `O-Bearer ${token}`,
-    "X-MERCHANT-ID": PHONEPE_MERCHANT_ID,
+    "X-MERCHANT-ID": overrides.mid || PHONEPE_MERCHANT_ID,
     "X-SOURCE": "API",
     "X-SOURCE-CHANNEL": "web",
     "X-BROWSER-FINGERPRINT": crypto.createHash("md5")
@@ -67,6 +67,21 @@ app.post("/api/create-payment", async (req, res) => {
     if (!amountRupees || amountRupees <= 0) {
       return res.status(400).json({ error: "Please send a valid amount" });
     }
+    // ===== DYNAMIC MERCHANT: the registry drives the payment =====
+    const requestedMerchant = (req.body.merchantId || "").trim();
+    let overrides = {};
+    let merchantRecord = null;
+    if (requestedMerchant) {
+      merchantRecord = await db.getMerchant(requestedMerchant);
+      if (!merchantRecord) {
+        return res.status(404).json({ error: "Unknown merchant" });
+      }
+      if (merchantRecord.status !== "ACTIVE") {
+        return res.status(403).json({ error: "Merchant is suspended" });
+      }
+      overrides = { mid: merchantRecord.mid, domain: merchantRecord.domain };
+    }
+
     const token = await getAuthToken();
     const merchantOrderId = "PAYPE" + Date.now();
     const amountPaise = Math.round(amountRupees * 100);
@@ -87,7 +102,7 @@ app.post("/api/create-payment", async (req, res) => {
 
     const ppRes = await fetch(`${PHONEPE_BASE_URL}/checkout/v2/pay`, {
       method: "POST",
-      headers: tspHeaders(token, req),
+      headers: tspHeaders(token, req, overrides),
       body: JSON.stringify(payload),
     });
     const data = await ppRes.json();
@@ -102,6 +117,8 @@ app.post("/api/create-payment", async (req, res) => {
       phonepeOrderId: data.orderId,
       amount: amountPaise,
       state: "PENDING",
+      merchantId: requestedMerchant || "DIRECT",
+      merchantName: merchantRecord ? merchantRecord.businessName : "PayPe direct",
     });
 
     res.json({ merchantOrderId, redirectUrl: data.redirectUrl });
