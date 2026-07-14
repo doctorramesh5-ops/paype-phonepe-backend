@@ -4,10 +4,12 @@ const express = require("express");
 const crypto = require("crypto");
 const path = require("path");
 const db = require("./db");
+const admin = require("./admin");
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(admin);
 
 const {
   PHONEPE_CLIENT_ID, PHONEPE_CLIENT_VERSION, PHONEPE_CLIENT_SECRET,

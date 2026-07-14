@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayPe · Admin Login</title>
+<style>
+  :root{--ink:#141026; --violet:#5B2EDD; --violet-dark:#3E1FA0; --mist:#F3F1FB; --line:#E2DDF3;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Segoe UI", system-ui, sans-serif; background:var(--mist); color:var(--ink);
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+  .card{background:#fff; border:1px solid var(--line); border-radius:16px;
+    width:100%; max-width:380px; padding:36px 32px; box-shadow:0 10px 30px rgba(62,31,160,.08);}
+  .brand{font-size:24px; font-weight:800; color:var(--violet-dark); margin-bottom:2px;}
+  .sub{font-size:13px; color:#59527A; margin-bottom:26px;}
+  label{display:block; font-size:13px; font-weight:600; margin:14px 0 6px;}
+  input{width:100%; border:1.5px solid var(--line); border-radius:10px; padding:12px; font-size:15px; outline:0;}
+  input:focus{border-color:var(--violet);}
+  button{width:100%; margin-top:22px; padding:14px; font-size:15px; font-weight:700;
+    color:#fff; background:var(--violet); border:0; border-radius:10px; cursor:pointer;}
+  button:hover{background:var(--violet-dark);}
+  button:disabled{opacity:.6;}
+  .msg{margin-top:14px; font-size:13px; color:#B3261E; min-height:18px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">PayPe Admin</div>
+  <p class="sub">Merchant portal · authorized access only</p>
+  <label for="u">Username</label>
+  <input id="u" autocomplete="username" />
+  <label for="p">Password</label>
+  <input id="p" type="password" autocomplete="current-password" />
+  <button id="btn" onclick="login()">Sign in</button>
+  <p class="msg" id="msg"></p>
+</div>
+<script>
+async function login() {
+  const btn = document.getElementById("btn");
+  const msg = document.getElementById("msg");
+  btn.disabled = true; msg.textContent = "";
+  try {
+    const res = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: document.getElementById("u").value.trim(),
+        password: document.getElementById("p").value,
+      }),
+    });
+    if (res.ok) {
+      window.location.href = "/admin/dashboard.html";
+    } else {
+      const data = await res.json();
+      msg.textContent = data.error || "Login failed";
+      btn.disabled = false;
+    }
+  } catch {
+    msg.textContent = "Could not reach the server";
+    btn.disabled = false;
+  }
+}
+document.getElementById("p").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+</script>
+</body>
+</html>

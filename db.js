@@ -60,3 +60,21 @@ async function updateRefund(merchantRefundId, fields) {
 }
 
 module.exports = { saveOrder, updateOrder, getPendingOrders, saveRefund, updateRefund };
+
+// ---- Admin dashboard queries (newest first) ----
+async function getRecentOrders(limit = 100) {
+  const d = getDb();
+  if (!d) return [];
+  const snap = await d.collection("orders").orderBy("createdAt", "desc").limit(limit).get();
+  return snap.docs.map((doc) => doc.data());
+}
+
+async function getRecentRefunds(limit = 100) {
+  const d = getDb();
+  if (!d) return [];
+  const snap = await d.collection("refunds").orderBy("createdAt", "desc").limit(limit).get();
+  return snap.docs.map((doc) => doc.data());
+}
+
+module.exports.getRecentOrders = getRecentOrders;
+module.exports.getRecentRefunds = getRecentRefunds;

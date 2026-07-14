@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayPe · Dashboard</title>
+<style>
+  :root{--ink:#141026; --violet:#5B2EDD; --violet-dark:#3E1FA0; --mist:#F3F1FB; --line:#E2DDF3;
+    --green:#166534; --green-bg:#DCFCE7; --red:#B3261E; --red-bg:#FEE2E2; --amber:#B45309; --amber-bg:#FEF3C7;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Segoe UI", system-ui, sans-serif; background:var(--mist); color:var(--ink); min-height:100vh;}
+  header{background:#fff; border-bottom:1px solid var(--line); padding:16px 24px;
+    display:flex; align-items:center; justify-content:space-between;}
+  .brand{font-size:20px; font-weight:800; color:var(--violet-dark);}
+  .logout{background:none; border:1.5px solid var(--line); border-radius:8px; padding:8px 16px;
+    font-size:13px; font-weight:600; color:#59527A; cursor:pointer;}
+  .logout:hover{border-color:var(--violet); color:var(--violet-dark);}
+  main{max-width:1000px; margin:0 auto; padding:24px 16px 60px;}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:28px;}
+  .stat{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px;}
+  .stat .n{font-size:24px; font-weight:800; color:var(--violet-dark);}
+  .stat .l{font-size:12px; color:#59527A; margin-top:2px;}
+  h2{font-size:16px; margin:26px 0 10px;}
+  .tablewrap{background:#fff; border:1px solid var(--line); border-radius:12px; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:620px;}
+  th{text-align:left; padding:10px 14px; color:#59527A; font-weight:600; border-bottom:1px solid var(--line);
+    font-size:11px; text-transform:uppercase; letter-spacing:.05em;}
+  td{padding:10px 14px; border-bottom:1px solid #F0EDFA;}
+  tr:last-child td{border-bottom:0;}
+  .chip{display:inline-block; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700;}
+  .COMPLETED{background:var(--green-bg); color:var(--green);}
+  .FAILED{background:var(--red-bg); color:var(--red);}
+  .PENDING{background:var(--amber-bg); color:var(--amber);}
+  .empty{padding:24px; text-align:center; color:#7A7396; font-size:13px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">PayPe Dashboard</div>
+  <button class="logout" onclick="logout()">Log out</button>
+</header>
+<main>
+  <div class="stats">
+    <div class="stat"><div class="n" id="sTotal">–</div><div class="l">Total orders</div></div>
+    <div class="stat"><div class="n" id="sDone">–</div><div class="l">Completed</div></div>
+    <div class="stat"><div class="n" id="sAmount">–</div><div class="l">Completed value (₹)</div></div>
+    <div class="stat"><div class="n" id="sRefunds">–</div><div class="l">Refunds</div></div>
+  </div>
+  <h2>Orders</h2>
+  <div class="tablewrap"><table id="ordersTable">
+    <thead><tr><th>Order ID</th><th>Amount (₹)</th><th>State</th><th>Created</th><th>Last event</th></tr></thead>
+    <tbody></tbody>
+  </table><div class="empty" id="ordersEmpty" style="display:none">No orders yet</div></div>
+  <h2>Refunds</h2>
+  <div class="tablewrap"><table id="refundsTable">
+    <thead><tr><th>Refund ID</th><th>Original order</th><th>Amount (₹)</th><th>State</th><th>Created</th></tr></thead>
+    <tbody></tbody>
+  </table><div class="empty" id="refundsEmpty" style="display:none">No refunds yet</div></div>
+</main>
+<script>
+const fmtTime = (ms) => ms ? new Date(ms).toLocaleString("en-IN", { dateStyle:"medium", timeStyle:"short" }) : "";
+const fmtAmt  = (paise) => (paise / 100).toLocaleString("en-IN");
+
+async function load() {
+  const [oRes, rRes] = await Promise.all([
+    fetch("/api/admin/orders"),
+    fetch("/api/admin/refunds"),
+  ]);
+  if (oRes.status === 401 || rRes.status === 401) {
+    window.location.href = "/admin/login.html";
+    return;
+  }
+  const { orders = [] } = await oRes.json();
+  const { refunds = [] } = await rRes.json();
+
+  const done = orders.filter(o => o.state === "COMPLETED");
+  document.getElementById("sTotal").textContent = orders.length;
+  document.getElementById("sDone").textContent = done.length;
+  document.getElementById("sAmount").textContent = fmtAmt(done.reduce((s,o) => s + (o.amount||0), 0));
+  document.getElementById("sRefunds").textContent = refunds.length;
+
+  const oBody = document.querySelector("#ordersTable tbody");
+  oBody.innerHTML = orders.map(o => `<tr>
+    <td>${o.merchantOrderId||""}</td>
+    <td>${fmtAmt(o.amount||0)}</td>
+    <td><span class="chip ${o.state||""}">${o.state||"?"}</span></td>
+    <td>${fmtTime(o.createdAt)}</td>
+    <td>${o.lastWebhookEvent||"—"}</td>
+  </tr>`).join("");
+  document.getElementById("ordersEmpty").style.display = orders.length ? "none" : "block";
+
+  const rBody = document.querySelector("#refundsTable tbody");
+  rBody.innerHTML = refunds.map(r => `<tr>
+    <td>${r.merchantRefundId||""}</td>
+    <td>${r.originalMerchantOrderId||""}</td>
+    <td>${fmtAmt(r.amount||0)}</td>
+    <td><span class="chip ${r.state||""}">${r.state||"?"}</span></td>
+    <td>${fmtTime(r.createdAt)}</td>
+  </tr>`).join("");
+  document.getElementById("refundsEmpty").style.display = refunds.length ? "none" : "block";
+}
+
+async function logout() {
+  await fetch("/api/admin/logout", { method: "POST" });
+  window.location.href = "/admin/login.html";
+}
+
+load();
+</script>
+</body>
+</html>
