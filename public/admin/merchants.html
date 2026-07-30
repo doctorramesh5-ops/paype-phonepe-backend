@@ -115,7 +115,8 @@ function render() {
     <td>${m.contactName || "—"}${m.email ? "<br><span style='color:#7A7396;font-size:11px'>" + m.email + "</span>" : ""}</td>
     <td><span class="chip ${m.status}">${m.status}</span></td>
     <td>${fmtTime(m.createdAt)}</td>
-    <td><button class="toggle" onclick="toggleStatus('${m.merchantId}','${m.status}')">
+    <td><button class="toggle" onclick="editContact('${m.merchantId}','${m.phone||""}','${m.email||""}')">Edit phone</button>
+      <button class="toggle" onclick="toggleStatus('${m.merchantId}','${m.status}')">
       ${m.status === "ACTIVE" ? "Suspend" : "Activate"}</button></td>
   </tr>`).join("");
   document.getElementById("empty").style.display = rows.length ? "none" : "block";
@@ -150,6 +151,18 @@ async function addMerchant() {
     msg.className = "msg err"; msg.textContent = "Could not reach the server";
   }
   btn.disabled = false;
+}
+
+async function editContact(id, currentPhone, currentEmail) {
+  const phone = prompt("Mobile number for this merchant (used for SMS sign-in):", currentPhone || "");
+  if (phone === null) return;
+  const res = await fetch("/api/admin/merchants/" + id + "/contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone: phone }),
+  });
+  const data = await res.json();
+  if (res.ok) { load(); } else { alert(data.error || "Could not update"); }
 }
 
 async function toggleStatus(id, current) {

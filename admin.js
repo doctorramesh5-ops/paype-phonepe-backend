@@ -250,3 +250,53 @@ router.get("/api/admin/account", requireAdmin, (req, res) => {
     passwordChangeable: false,
   });
 });
+
+// ============ ADMIN: EDIT EXISTING MERCHANT CONTACT ============
+router.post("/api/admin/merchants/:merchantId/contact", requireAdmin, async (req, res) => {
+  try {
+    const merchant = await db.getMerchant(req.params.merchantId);
+    if (!merchant) return res.status(404).json({ error: "Merchant not found" });
+
+    const { phone, email } = req.body || {};
+    const fields = {};
+
+    if (phone !== undefined) {
+      const p = String(phone).trim();
+      if (p && p.replace(/\D/g, "").length < 10) {
+        return res.status(400).json({ error: "Enter a valid mobile number (at least 10 digits)" });
+      }
+      if (p) {
+        const existing = await db.getMerchantByContact(p);
+        if (existing && existing.merchantId !== merchant.merchantId) {
+          return res.status(409).json({ error: "That mobile number is already registered to another merchant" });
+        }
+      }
+      fields.phone = p;
+    }
+
+    if (email !== undefined) {
+      const e = String(email).trim().toLowerCase();
+      if (e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) {
+        return res.status(400).json({ error: "Enter a valid email address" });
+      }
+      if (e) {
+        const existing = await db.getMerchantByContact(e);
+        if (existing && existing.merchantId !== merchant.merchantId) {
+          return res.status(409).json({ error: "That email is already registered to another merchant" });
+        }
+      }
+      fields.email = e;
+    }
+
+    if (Object.keys(fields).length === 0) {
+      return res.status(400).json({ error: "Nothing to update" });
+    }
+
+    await db.updateMerchant(merchant.merchantId, fields);
+    console.log("✏️  Admin updated merchant contact:", merchant.merchantId, Object.keys(fields).join(","));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ admin edit contact error:", err.message);
+    res.status(500).json({ error: "Could not update contact" });
+  }
+});
