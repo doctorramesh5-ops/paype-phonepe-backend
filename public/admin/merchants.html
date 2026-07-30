@@ -116,6 +116,7 @@ function render() {
     <td><span class="chip ${m.status}">${m.status}</span></td>
     <td>${fmtTime(m.createdAt)}</td>
     <td><button class="toggle" onclick="editContact('${m.merchantId}','${m.phone||""}','${m.email||""}')">Edit phone</button>
+      <button class="toggle" onclick="deleteMerchant('${m.merchantId}','${m.businessName.replace(/'/g,"")}')" style="color:#B3261E">Delete</button>
       <button class="toggle" onclick="toggleStatus('${m.merchantId}','${m.status}')">
       ${m.status === "ACTIVE" ? "Suspend" : "Activate"}</button></td>
   </tr>`).join("");

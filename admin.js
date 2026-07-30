@@ -300,3 +300,26 @@ router.post("/api/admin/merchants/:merchantId/contact", requireAdmin, async (req
     res.status(500).json({ error: "Could not update contact" });
   }
 });
+
+// ============ ADMIN: DELETE MERCHANT (safe) ============
+router.delete("/api/admin/merchants/:merchantId", requireAdmin, async (req, res) => {
+  try {
+    const merchant = await db.getMerchant(req.params.merchantId);
+    if (!merchant) return res.status(404).json({ error: "Merchant not found" });
+
+    const hasHistory = await db.merchantHasOrders(merchant.merchantId);
+
+    if (!hasHistory) {
+      await db.hardDeleteMerchant(merchant.merchantId);
+      console.log("🗑️  Merchant permanently deleted (no history):", merchant.merchantId);
+      return res.json({ ok: true, mode: "deleted" });
+    }
+
+    await db.updateMerchant(merchant.merchantId, { status: "DELETED", deletedAt: Date.now() });
+    console.log("🗑️  Merchant soft-deleted (has order history):", merchant.merchantId);
+    res.json({ ok: true, mode: "soft-deleted" });
+  } catch (err) {
+    console.error("❌ delete merchant error:", err.message);
+    res.status(500).json({ error: "Could not delete merchant" });
+  }
+});

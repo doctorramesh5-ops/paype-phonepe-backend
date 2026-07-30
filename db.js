@@ -421,3 +421,24 @@ async function updateSettings(fields) {
 }
 module.exports.getSettings = getSettings;
 module.exports.updateSettings = updateSettings;
+
+// ---- Merchant deletion support ----
+async function merchantHasOrders(merchantId) {
+  const d = getDb();
+  if (!d) return true; // fail safe: assume history exists if we cannot check
+  const snap = await d.collection("orders").where("merchantId", "==", merchantId).limit(1).get();
+  return !snap.empty;
+}
+
+async function hardDeleteMerchant(merchantId) {
+  const d = getDb();
+  if (!d) throw new Error("database unavailable");
+  await d.collection("merchants").doc(merchantId).delete();
+  const keys = await d.collection("apikeys").where("merchantId", "==", merchantId).get();
+  const batch = d.batch();
+  keys.docs.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
+}
+
+module.exports.merchantHasOrders = merchantHasOrders;
+module.exports.hardDeleteMerchant = hardDeleteMerchant;
