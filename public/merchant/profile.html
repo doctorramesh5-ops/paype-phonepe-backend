@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Profile & Settings · PayPe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#140611; --panel:#1E0A1A; --panel-2:#260E21; --edge:#3A1730;
+    --magenta:#DA0077; --magenta-lit:#FF3D95;
+    --teal:#3DD9A0; --teal-bg:rgba(61,217,160,.15);
+    --bone:#FBF3F8; --ash:#A794A2; --ash-dim:#74606F; --red:#FF6B7A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--void);color:var(--bone);font-family:"Outfit",system-ui,sans-serif;
+    font-size:15px;line-height:1.55;font-weight:300;-webkit-font-smoothing:antialiased;}
+  h1,h2{font-family:"Playfair Display",Georgia,serif;font-weight:600;}
+  header{background:var(--panel);border-bottom:1px solid var(--edge);padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10;}
+  .brand{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+  .logo{font-family:"Playfair Display",serif;font-weight:700;font-size:19px;color:var(--magenta-lit);}
+  nav{display:flex;gap:4px;}
+  nav a{padding:8px 13px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--ash);text-decoration:none;}
+  nav a:hover{background:var(--panel-2);color:var(--bone);}
+  nav a.on{background:rgba(218,0,119,.15);color:var(--magenta-lit);}
+  .logout{background:none;border:1px solid var(--edge);border-radius:8px;padding:8px 15px;
+    font-size:13px;font-weight:500;color:var(--ash);cursor:pointer;}
+  main{max-width:720px;margin:0 auto;padding:26px 18px 70px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--magenta-lit);
+    letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;}
+  h1{font-size:26px;letter-spacing:-.02em;margin-bottom:20px;}
+  h2{font-size:16px;margin:26px 0 12px;font-weight:600;}
+  h2:first-of-type{margin-top:0;}
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:22px;margin-bottom:10px;}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--ash);margin:14px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  input{width:100%;border:1.5px solid var(--edge);border-radius:9px;padding:11px 12px;
+    font-size:14.5px;outline:0;background:var(--void);color:var(--bone);}
+  input:focus{border-color:var(--magenta);}
+  input:disabled{color:var(--ash-dim);background:var(--panel-2);cursor:not-allowed;}
+  .rowbtn{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center;}
+  .btn{background:var(--magenta);border:0;border-radius:9px;color:#fff;padding:11px 18px;
+    font-size:13.5px;font-weight:700;cursor:pointer;}
+  .btn:hover{background:#B8005F;}
+  .btn:disabled{opacity:.55;cursor:default;}
+  .msg{font-size:13px;min-height:18px;}
+  .msg.ok{color:var(--teal);} .msg.err{color:var(--red);}
+  .chip{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:700;background:var(--teal-bg);color:var(--teal);}
+  .readonly-note{font-size:12.5px;color:var(--ash-dim);margin-top:6px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">PayPe</div>
+    <nav>
+      <a href="/merchant/dashboard.html">Dashboard</a>
+      <a href="/merchant/reports.html">Reports</a>
+      <a href="/merchant/profile.html" class="on">Profile</a>
+    </nav>
+  </div>
+  <button class="logout" onclick="signOut()">Sign out</button>
+</header>
+<main>
+  <div class="eyebrow">Account</div>
+  <h1>Profile &amp; settings</h1>
+  <h2>Business profile</h2>
+  <div class="panel">
+    <label for="mid">PhonePe MID <span class="chip" id="statChip"></span></label>
+    <input id="mid" disabled />
+    <div class="readonly-note">Set by PayPe when your account is onboarded. To change it, contact admin@paype.co.in.</div>
+    <label for="bName">Business name</label>
+    <input id="bName" />
+    <label for="cName">Contact person</label>
+    <input id="cName" />
+    <label for="domain">Website domain</label>
+    <input id="domain" placeholder="https://www.example.com" />
+    <div class="readonly-note">Sent to the payment gateway with every transaction. Must be a valid https:// address.</div>
+    <div class="rowbtn">
+      <button class="btn" id="saveBtn" onclick="saveProfile()">Save changes</button>
+      <span class="msg" id="msgProfile"></span>
+    </div>
+  </div>
+  <h2>Sign-in email</h2>
+  <div class="panel">
+    <label for="email">Email address</label>
+    <input id="email" type="email" />
+    <div class="rowbtn">
+      <button class="btn" id="emailBtn" onclick="changeEmail()">Update email</button>
+      <span class="msg" id="msgEmail"></span>
+    </div>
+  </div>
+  <h2>Sign-in mobile</h2>
+  <div class="panel">
+    <label for="phone">Mobile number</label>
+    <input id="phone" placeholder="+91 98xxxxxxx" />
+    <div class="rowbtn">
+      <button class="btn" id="phoneBtn" onclick="changePhone()">Update mobile</button>
+      <span class="msg" id="msgPhone"></span>
+    </div>
+  </div>
+  <h2>Account</h2>
+  <div class="panel">
+    <label>Merchant ID</label>
+    <input id="merchantIdField" disabled />
+    <label>Onboarded</label>
+    <input id="onboarded" disabled />
+  </div>
+</main>
+<script>
+function toLogin() { window.location.href = "/merchant/login.html"; }
+async function load() {
+  const res = await fetch("/api/merchant/profile");
+  if (res.status === 401) { toLogin(); return; }
+  const p = await res.json();
+  document.getElementById("mid").value = p.mid || "";
+  document.getElementById("bName").value = p.businessName || "";
+  document.getElementById("cName").value = p.contactName || "";
+  document.getElementById("domain").value = p.domain || "";
+  document.getElementById("email").value = p.email || "";
+  document.getElementById("phone").value = p.phone || "";
+  document.getElementById("merchantIdField").value = p.merchantId || "";
+  document.getElementById("onboarded").value = p.createdAt ? new Date(p.createdAt).toLocaleDateString("en-IN", { dateStyle: "long" }) : "—";
+  document.getElementById("statChip").textContent = p.status || "";
+}
+function setMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = "msg" + (ok === true ? " ok" : ok === false ? " err" : "");
+}
+async function saveProfile() {
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true; setMsg("msgProfile", "Saving…");
+  try {
+    const res = await fetch("/api/merchant/profile", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessName: document.getElementById("bName").value, contactName: document.getElementById("cName").value, domain: document.getElementById("domain").value }),
+    });
+    const data = await res.json();
+    if (res.ok) setMsg("msgProfile", "✅ Saved", true); else setMsg("msgProfile", data.error || "Could not save", false);
+  } catch { setMsg("msgProfile", "Could not reach PayPe", false); }
+  btn.disabled = false;
+}
+async function changeEmail() {
+  const btn = document.getElementById("emailBtn");
+  btn.disabled = true; setMsg("msgEmail", "Updating…");
+  try {
+    const res = await fetch("/api/merchant/profile/email", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: document.getElementById("email").value }),
+    });
+    const data = await res.json();
+    if (res.ok) setMsg("msgEmail", "✅ Email updated — use it next time you sign in", true); else setMsg("msgEmail", data.error || "Could not update", false);
+  } catch { setMsg("msgEmail", "Could not reach PayPe", false); }
+  btn.disabled = false;
+}
+async function changePhone() {
+  const btn = document.getElementById("phoneBtn");
+  btn.disabled = true; setMsg("msgPhone", "Updating…");
+  try {
+    const res = await fetch("/api/merchant/profile/phone", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: document.getElementById("phone").value }),
+    });
+    const data = await res.json();
+    if (res.ok) setMsg("msgPhone", "✅ Mobile updated — use it next time you sign in", true); else setMsg("msgPhone", data.error || "Could not update", false);
+  } catch { setMsg("msgPhone", "Could not reach PayPe", false); }
+  btn.disabled = false;
+}
+async function signOut() { await fetch("/api/merchant/logout", { method: "POST" }); toLogin(); }
+load();
+</script>
+</body>
+</html>

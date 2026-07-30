@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Settings · PayPe Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#140611; --panel:#1E0A1A; --panel-2:#260E21; --edge:#3A1730; --edge-lit:#5C2247;
+    --magenta:#DA0077; --magenta-lit:#FF3D95;
+    --teal:#3DD9A0; --amber:#F5B94A;
+    --bone:#FBF3F8; --ash:#A794A2; --ash-dim:#74606F; --red:#FF6B7A; --red-bg:rgba(255,107,122,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--void);color:var(--bone);font-family:"Outfit",system-ui,sans-serif;
+    font-size:15px;line-height:1.55;font-weight:300;-webkit-font-smoothing:antialiased;}
+  h1,h2{font-family:"Playfair Display",Georgia,serif;font-weight:600;}
+  code{font-family:"IBM Plex Mono",monospace;background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px;}
+  header{background:var(--panel);border-bottom:1px solid var(--edge);padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10;}
+  .brand{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+  .logo{font-family:"Playfair Display",serif;font-weight:700;font-size:19px;color:var(--magenta-lit);}
+  nav{display:flex;gap:4px;}
+  nav a{padding:8px 13px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--ash);text-decoration:none;}
+  nav a:hover{background:var(--panel-2);color:var(--bone);}
+  nav a.on{background:rgba(218,0,119,.15);color:var(--magenta-lit);}
+  .logout{background:none;border:1px solid var(--edge);border-radius:8px;padding:8px 15px;
+    font-size:13px;font-weight:500;color:var(--ash);cursor:pointer;}
+  main{max-width:720px;margin:0 auto;padding:26px 18px 70px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--magenta-lit);
+    letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;}
+  h1{font-size:26px;letter-spacing:-.02em;margin-bottom:20px;}
+  h2{font-size:16px;margin:26px 0 12px;font-weight:600;}
+  h2:first-of-type{margin-top:0;}
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:22px;margin-bottom:10px;}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--ash);margin:14px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  input,textarea{width:100%;border:1.5px solid var(--edge);border-radius:9px;padding:11px 12px;
+    font-size:14.5px;outline:0;background:var(--void);color:var(--bone);font-family:inherit;}
+  input:focus,textarea:focus{border-color:var(--magenta);}
+  input:disabled{color:var(--ash-dim);background:var(--panel-2);cursor:not-allowed;}
+  textarea{resize:vertical;min-height:60px;}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;
+    background:var(--void);border-radius:9px;padding:12px 14px;margin-top:8px;}
+  .toggle-row .lab{font-size:14px;font-weight:600;color:var(--bone);}
+  .toggle-row .sub{font-size:12.5px;color:var(--ash);margin-top:2px;}
+  .switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:var(--edge);border-radius:99px;cursor:pointer;transition:.15s;}
+  .slider:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;
+    background:var(--bone);border-radius:50%;transition:.15s;}
+  .switch input:checked + .slider{background:var(--magenta);}
+  .switch input:checked + .slider:before{transform:translateX(18px);}
+  .rowbtn{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center;}
+  .btn{background:var(--magenta);border:0;border-radius:9px;color:#fff;padding:11px 18px;
+    font-size:13.5px;font-weight:700;cursor:pointer;}
+  .btn:hover{background:#B8005F;}
+  .btn:disabled{opacity:.55;cursor:default;}
+  .msg{font-size:13px;min-height:18px;}
+  .msg.ok{color:var(--teal);} .msg.err{color:var(--red);}
+  .note{background:rgba(245,185,74,.1);border:1px solid rgba(245,185,74,.3);border-radius:10px;padding:14px 16px;
+    font-size:13.5px;color:#E0C98A;margin-top:8px;}
+  .note b{color:var(--amber);}
+  .info-line{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--edge);font-size:14px;}
+  .info-line:last-child{border-bottom:0;}
+  .info-line .k{color:var(--ash);}
+  .info-line .v{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--bone);}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">PayPe Admin</div>
+    <nav>
+      <a href="/admin/overview.html">Overview</a>
+      <a href="/admin/dashboard.html">Transactions</a>
+      <a href="/admin/merchants.html">Merchants</a>
+      <a href="/admin/reports.html">Reports</a>
+      <a href="/admin/settings.html" class="on">Settings</a>
+    </nav>
+  </div>
+  <button class="logout" onclick="logout()">Log out</button>
+</header>
+<main>
+  <div class="eyebrow">Configuration</div>
+  <h1>Platform settings</h1>
+  <div class="panel">
+    <p style="color:var(--ash);font-size:13.5px;margin-bottom:4px">Shown to merchants and used across PayPe's pages and communications.</p>
+    <label for="supportEmail">Support email</label>
+    <input id="supportEmail" type="email" />
+    <label for="supportPhone">Support phone</label>
+    <input id="supportPhone" />
+    <label for="businessName">Business name</label>
+    <input id="businessName" />
+    <label for="businessAddress">Registered address</label>
+    <textarea id="businessAddress"></textarea>
+    <div class="toggle-row">
+      <div>
+        <div class="lab">Maintenance mode</div>
+        <div class="sub">Marks the platform as under maintenance in the admin dashboard. Does not stop payments.</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="maintenanceMode" /><span class="slider"></span></label>
+    </div>
+    <div class="rowbtn">
+      <button class="btn" id="saveBtn" onclick="saveSettings()">Save settings</button>
+      <span class="msg" id="msgSettings"></span>
+    </div>
+  </div>
+  <h2>Reconciliation</h2>
+  <div class="panel">
+    <div class="info-line"><span class="k">Schedule</span><span class="v" id="reconcileNote">—</span></div>
+    <div class="info-line"><span class="k">Endpoint</span><span class="v">/api/reconcile</span></div>
+  </div>
+  <h2>Admin account</h2>
+  <div class="panel">
+    <div class="info-line"><span class="k">Username</span><span class="v" id="accUsername">—</span></div>
+    <div class="info-line"><span class="k">Credential source</span><span class="v" id="accSource">—</span></div>
+    <div class="note">
+      <b>Password changes are not self-service.</b> Admin credentials are stored as Vercel
+      environment variables, not in the database. To change them: Vercel → Settings →
+      Environment Variables → edit <code>ADMIN_USERNAME</code> / <code>ADMIN_PASSWORD</code> → Redeploy.
+    </div>
+  </div>
+</main>
+<script>
+function toLogin() { window.location.href = "/admin/login.html"; }
+async function load() {
+  const [sRes, aRes] = await Promise.all([fetch("/api/admin/settings"), fetch("/api/admin/account")]);
+  if (sRes.status === 401 || aRes.status === 401) { toLogin(); return; }
+  const { settings } = await sRes.json();
+  document.getElementById("supportEmail").value = settings.supportEmail || "";
+  document.getElementById("supportPhone").value = settings.supportPhone || "";
+  document.getElementById("businessName").value = settings.businessName || "";
+  document.getElementById("businessAddress").value = settings.businessAddress || "";
+  document.getElementById("maintenanceMode").checked = Boolean(settings.maintenanceMode);
+  document.getElementById("reconcileNote").textContent = settings.reconcileIntervalNote || "—";
+  const acc = await aRes.json();
+  document.getElementById("accUsername").textContent = acc.username || "—";
+  document.getElementById("accSource").textContent = acc.credentialSource || "—";
+}
+function setMsg(text, ok) {
+  const el = document.getElementById("msgSettings");
+  el.textContent = text;
+  el.className = "msg" + (ok === true ? " ok" : ok === false ? " err" : "");
+}
+async function saveSettings() {
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true; setMsg("Saving…");
+  try {
+    const res = await fetch("/api/admin/settings", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        supportEmail: document.getElementById("supportEmail").value,
+        supportPhone: document.getElementById("supportPhone").value,
+        businessName: document.getElementById("businessName").value,
+        businessAddress: document.getElementById("businessAddress").value,
+        maintenanceMode: document.getElementById("maintenanceMode").checked,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) setMsg("✅ Saved", true); else setMsg(data.error || "Could not save", false);
+  } catch { setMsg("Could not reach PayPe", false); }
+  btn.disabled = false;
+}
+async function logout() { await fetch("/api/admin/logout", { method: "POST" }); toLogin(); }
+load();
+</script>
+</body>
+</html>
