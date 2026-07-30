@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reports · PayPe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#140611; --panel:#1E0A1A; --panel-2:#260E21; --edge:#3A1730; --edge-lit:#5C2247;
+    --magenta:#DA0077; --magenta-lit:#FF3D95; --rose:#FF5C9E;
+    --teal:#3DD9A0; --amber:#F5B94A; --sky:#5EC3E8; --violet2:#9B7BF0;
+    --bone:#FBF3F8; --ash:#A794A2; --ash-dim:#74606F; --red:#FF6B7A; --red-bg:rgba(255,107,122,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--void);color:var(--bone);font-family:"Outfit",system-ui,sans-serif;
+    font-size:15px;line-height:1.55;font-weight:300;-webkit-font-smoothing:antialiased;}
+  h1,h2{font-family:"Playfair Display",Georgia,serif;font-weight:600;}
+  .mono{font-family:"IBM Plex Mono",monospace;}
+  a{color:var(--magenta-lit);text-decoration:none;}
+  header{background:var(--panel);border-bottom:1px solid var(--edge);padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10;}
+  .brand{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+  .logo{font-family:"Playfair Display",serif;font-weight:700;font-size:19px;color:var(--magenta-lit);}
+  nav{display:flex;gap:4px;}
+  nav a{padding:8px 13px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--ash);}
+  nav a:hover{background:var(--panel-2);color:var(--bone);}
+  nav a.on{background:rgba(218,0,119,.15);color:var(--magenta-lit);}
+  .logout{background:none;border:1px solid var(--edge);border-radius:8px;padding:8px 15px;
+    font-size:13px;font-weight:500;color:var(--ash);cursor:pointer;}
+  main{max-width:1080px;margin:0 auto;padding:26px 18px 70px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--magenta-lit);
+    letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;}
+  h1{font-size:26px;letter-spacing:-.02em;margin-bottom:16px;}
+  .periods{display:flex;gap:8px;margin-bottom:20px;}
+  .pbtn{background:var(--panel);border:1px solid var(--edge);border-radius:9px;padding:9px 18px;
+    font-size:13.5px;font-weight:600;color:var(--ash);cursor:pointer;font-family:"Outfit",sans-serif;}
+  .pbtn.on{background:var(--magenta);border-color:var(--magenta);color:#fff;}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  .kpi{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:16px 18px;}
+  .kpi .n{font-family:"Playfair Display",serif;font-size:23px;font-weight:700;letter-spacing:-.02em;}
+  .kpi .l{font-size:11.5px;color:var(--ash);margin-top:3px;}
+  .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;}
+  .card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:22px;margin-bottom:14px;}
+  .card h2{font-size:16px;margin-bottom:4px;}
+  .card .sub{font-size:12.5px;color:var(--ash);margin-bottom:16px;}
+  .bars{display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:10px;overflow-x:auto;}
+  .barcol{flex:1;min-width:22px;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;}
+  .bar{width:100%;max-width:26px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,var(--magenta-lit),var(--magenta));}
+  .barcol .lbl{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--ash-dim);white-space:nowrap;}
+  .methodlist{display:flex;flex-direction:column;gap:12px;}
+  .method{display:flex;align-items:center;gap:12px;}
+  .method .dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+  .method .lab{font-size:13.5px;flex:1;}
+  .method .track{flex:2;height:8px;background:#2A0F24;border-radius:99px;overflow:hidden;}
+  .method .fill{height:100%;border-radius:99px;}
+  .method .amt{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--bone);width:90px;text-align:right;}
+  .empty{padding:30px;text-align:center;color:var(--ash-dim);font-size:13.5px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">PayPe</div>
+    <nav>
+      <a href="/merchant/dashboard.html">Dashboard</a>
+      <a href="/merchant/reports.html" class="on">Reports</a>
+      <a href="/merchant/profile.html">Profile</a>
+    </nav>
+  </div>
+  <button class="logout" onclick="logout()">Log out</button>
+</header>
+<main>
+  <div class="eyebrow">Reports</div>
+  <h1>Collections by payment method</h1>
+  <div class="periods">
+    <button class="pbtn" data-p="daily" onclick="setPeriod('daily')">Daily</button>
+    <button class="pbtn" data-p="monthly" onclick="setPeriod('monthly')">Monthly</button>
+    <button class="pbtn" data-p="yearly" onclick="setPeriod('yearly')">Yearly</button>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><div class="n" id="kVolume">–</div><div class="l">Volume collected (₹)</div></div>
+    <div class="kpi"><div class="n" id="kCompleted">–</div><div class="l">Completed</div></div>
+    <div class="kpi"><div class="n" id="kFailed">–</div><div class="l">Failed</div></div>
+    <div class="kpi"><div class="n" id="kPending">–</div><div class="l">Pending</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h2 id="tlTitle">Collections over time</h2>
+      <div class="sub" id="tlSub">Completed volume per period</div>
+      <div class="bars" id="bars"></div>
+      <div class="empty" id="tlEmpty" style="display:none">No completed payments in this period</div>
+    </div>
+    <div class="card">
+      <h2>By payment method</h2>
+      <div class="sub">Share of completed volume</div>
+      <div class="methodlist" id="methodList"></div>
+      <div class="empty" id="mEmpty" style="display:none">No completed payments yet</div>
+    </div>
+  </div>
+</main>
+<script>
+const money = (paise) => ((paise||0)/100).toLocaleString("en-IN");
+const COLORS = { UPI: "#3DD9A0", CREDIT_CARD: "#FF3D95", DEBIT_CARD: "#F5B94A", CARD: "#9B7BF0", NET_BANKING: "#5EC3E8", WALLET: "#FF6B7A", OTHER: "#74606F" };
+const LABELS = { UPI: "UPI", CREDIT_CARD: "Credit card", DEBIT_CARD: "Debit card", CARD: "Card", NET_BANKING: "Net banking", WALLET: "Wallet", OTHER: "Other" };
+let currentPeriod = "monthly";
+function toLogin() { window.location.href = "/merchant/login.html"; }
+async function setPeriod(p) {
+  currentPeriod = p;
+  document.querySelectorAll(".pbtn").forEach(b => b.classList.toggle("on", b.dataset.p === p));
+  await load();
+}
+async function load() {
+  const res = await fetch("/api/merchant/reports?period=" + currentPeriod);
+  if (res.status === 401) { toLogin(); return; }
+  if (!res.ok) { document.querySelector("main").insertAdjacentHTML("beforeend", "<p style='color:var(--ash)'>Could not load report.</p>"); return; }
+  const { report: r } = await res.json();
+  document.getElementById("kVolume").textContent = money(r.totals.volume);
+  document.getElementById("kCompleted").textContent = r.totals.completed;
+  document.getElementById("kFailed").textContent = r.totals.failed;
+  document.getElementById("kPending").textContent = r.totals.pending;
+  const subMap = { daily: "Last 24 hours, by hour", monthly: "This month, by day", yearly: "This year, by month" };
+  document.getElementById("tlSub").textContent = subMap[currentPeriod] || "";
+  const bars = document.getElementById("bars");
+  const tl = r.timeline || [];
+  if (!tl.length) { bars.innerHTML = ""; document.getElementById("tlEmpty").style.display = "block"; }
+  else {
+    document.getElementById("tlEmpty").style.display = "none";
+    const maxAmt = Math.max(...tl.map(t => t.amount), 1);
+    bars.innerHTML = tl.map(t => {
+      const h = Math.max(6, Math.round((t.amount / maxAmt) * 150));
+      return `<div class="barcol"><div class="bar" style="height:${h}px" title="₹${money(t.amount)}"></div><span class="lbl">${t.label}</span></div>`;
+    }).join("");
+  }
+  const list = document.getElementById("methodList");
+  const methods = r.byPaymentMethod || [];
+  if (!methods.length) { list.innerHTML = ""; document.getElementById("mEmpty").style.display = "block"; }
+  else {
+    document.getElementById("mEmpty").style.display = "none";
+    const maxM = Math.max(...methods.map(m => m.amount), 1);
+    list.innerHTML = methods.map(m => {
+      const color = COLORS[m.mode] || "#74606F";
+      const label = LABELS[m.mode] || m.mode;
+      const pct = Math.max(4, Math.round((m.amount / maxM) * 100));
+      return `<div class="method"><span class="dot" style="background:${color}"></span><span class="lab">${label} <span style="color:var(--ash-dim)">(${m.count})</span></span><span class="track"><span class="fill" style="width:${pct}%;background:${color}"></span></span><span class="amt">₹${money(m.amount)}</span></div>`;
+    }).join("");
+  }
+}
+async function logout() { await fetch("/api/merchant/logout", { method: "POST" }); toLogin(); }
+setPeriod("monthly");
+</script>
+</body>
+</html>
