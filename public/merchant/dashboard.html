@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard · PayPe</title>
+<style>
+  :root{--ink:#16112E;--soft:#544D74;--faint:#8A83A6;--violet:#5B2EDD;--deep:#3E1FA0;
+        --mist:#F7F5FC;--rule:#E4DFF3;--wash:#F1EDFE;
+        --green:#0B7C6E;--green-bg:#E0F5F1;--rose:#A81F2E;--rose-bg:#FCE9EB;
+        --amber:#9A5B08;--amber-bg:#FDF2DC;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--mist);color:var(--ink);min-height:100vh;}
+  .mono{font-family:ui-monospace,"IBM Plex Mono",monospace;}
+  header{background:#fff;border-bottom:1px solid var(--rule);padding:14px 22px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .brand{font-size:20px;font-weight:800;color:var(--deep);letter-spacing:-.03em;}
+  .who{font-size:13px;color:var(--soft);}
+  .who b{color:var(--ink);}
+  .ghost{background:none;border:1.5px solid var(--rule);border-radius:8px;padding:8px 15px;
+    font-size:13px;font-weight:600;color:var(--soft);cursor:pointer;}
+  .ghost:hover{border-color:var(--violet);color:var(--deep);}
+  main{max-width:960px;margin:0 auto;padding:24px 18px 70px;}
+  h2{font-size:17px;font-weight:700;margin:30px 0 12px;letter-spacing:-.01em;}
+  h2:first-of-type{margin-top:0;}
+  p{color:var(--soft);font-size:14px;}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;margin-bottom:8px;}
+  .stat{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:15px 16px;}
+  .stat .n{font-size:23px;font-weight:800;color:var(--deep);letter-spacing:-.02em;}
+  .stat .l{font-size:12px;color:var(--soft);margin-top:2px;}
+
+  .panel{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:18px;margin-bottom:8px;}
+  .linkrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .linkbox{flex:1;min-width:220px;background:var(--mist);border:1px solid var(--rule);border-radius:9px;
+    padding:11px 12px;font-size:13px;word-break:break-all;}
+  .btn{background:var(--violet);border:0;border-radius:9px;color:#fff;padding:11px 18px;
+    font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .btn:hover{background:var(--deep);}
+  .btn:disabled{opacity:.55;cursor:default;}
+
+  .tablewrap{background:#fff;border:1px solid var(--rule);border-radius:12px;overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px;}
+  th{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--faint);
+    font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;}
+  td{padding:10px 14px;border-bottom:1px solid #F3F0FB;color:var(--soft);vertical-align:top;}
+  tr:last-child td{border-bottom:0;}
+  .chip{display:inline-block;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:700;}
+  .COMPLETED{background:var(--green-bg);color:var(--green);}
+  .ACTIVE{background:var(--green-bg);color:var(--green);}
+  .FAILED{background:var(--rose-bg);color:var(--rose);}
+  .REVOKED{background:#EFEDF5;color:var(--faint);}
+  .PENDING{background:var(--amber-bg);color:var(--amber);}
+  .empty{padding:22px;text-align:center;color:var(--faint);font-size:13px;}
+
+  .newkey{background:var(--amber-bg);border:1px solid #F0DDB4;border-radius:11px;padding:16px;margin:14px 0;}
+  .newkey .warn{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--amber);margin-bottom:10px;}
+  .newkey .lab{font-size:11px;color:#6B4206;margin-bottom:3px;}
+  .newkey .val{font-size:13px;word-break:break-all;background:#fff;border-radius:7px;padding:9px;margin-bottom:9px;}
+  .hide{display:none;}
+  a{color:var(--deep);}
+  :focus-visible{outline:2.5px solid var(--violet);outline-offset:2px;}
+  @media(max-width:600px){ main{padding:18px 14px 60px;} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">PayPe</div>
+    <div class="who" id="who">Loading…</div>
+  </div>
+  <button class="ghost" onclick="signOut()">Sign out</button>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat"><div class="n" id="sPaid">–</div><div class="l">Payments received</div></div>
+    <div class="stat"><div class="n" id="sValue">–</div><div class="l">Collected (₹)</div></div>
+    <div class="stat"><div class="n" id="sPending">–</div><div class="l">Pending</div></div>
+    <div class="stat"><div class="n" id="sRefunds">–</div><div class="l">Refunds</div></div>
+  </div>
+
+  <h2>Your payment link</h2>
+  <div class="panel">
+    <p>Share this link, or put it behind a Pay button on your website. Customers pay, and the
+    result appears below.</p>
+    <div class="linkrow">
+      <div class="linkbox mono" id="payLink">…</div>
+      <button class="btn" onclick="copyLink()" id="copyBtn">Copy link</button>
+    </div>
+  </div>
+
+  <h2>Payments</h2>
+  <div class="tablewrap">
+    <table id="oTbl">
+      <thead><tr><th>Order</th><th>Amount (₹)</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="empty hide" id="oEmpty">No payments yet. Share your link above to take the first one.</div>
+  </div>
+
+  <h2>Refunds</h2>
+  <div class="tablewrap">
+    <table id="rTbl">
+      <thead><tr><th>Refund</th><th>Original order</th><th>Amount (₹)</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="empty hide" id="rEmpty">No refunds issued.</div>
+  </div>
+
+  <h2>API keys</h2>
+  <div class="panel">
+    <p>Keys let your own server create payments and issue refunds. Keep the secret on your
+    server — never in a web page or mobile app. See the
+    <a href="/docs/">API documentation</a> to get started.</p>
+
+    <div class="newkey hide" id="newKey">
+      <div class="warn">Copy the secret now — it cannot be shown again</div>
+      <div class="lab">Key ID</div>
+      <div class="val mono" id="nkId"></div>
+      <div class="lab">Secret</div>
+      <div class="val mono" id="nkSecret"></div>
+      <button class="btn" onclick="copySecret()">Copy secret</button>
+    </div>
+
+    <div id="keyList" style="margin-top:14px">…</div>
+    <button class="btn" style="margin-top:16px" onclick="genKey()" id="genBtn">Generate test key</button>
+  </div>
+</main>
+
+<script>
+var lastSecret = "";
+var payLinkValue = "";
+
+var money = function (paise) { return ((paise || 0) / 100).toLocaleString("en-IN"); };
+var when = function (ms) {
+  return ms ? new Date(ms).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "—";
+};
+
+function toLogin() { window.location.href = "/merchant/login.html"; }
+
+async function load() {
+  var res = await fetch("/api/merchant/me");
+  if (res.status === 401) { toLogin(); return; }
+  var me = await res.json();
+
+  document.getElementById("who").innerHTML =
+    "<b>" + me.businessName + "</b> · " + me.merchantId;
+  payLinkValue = me.checkoutUrl || (window.location.origin + "/?merchant=" + me.merchantId);
+  document.getElementById("payLink").textContent = payLinkValue;
+
+  loadOrders();
+  loadRefunds();
+  loadKeys();
+}
+
+async function loadOrders() {
+  var res = await fetch("/api/merchant/orders");
+  if (res.status === 401) { toLogin(); return; }
+  var orders = (await res.json()).orders || [];
+
+  var done = orders.filter(function (o) { return o.state === "COMPLETED"; });
+  var pend = orders.filter(function (o) { return o.state === "PENDING"; });
+  document.getElementById("sPaid").textContent = done.length;
+  document.getElementById("sValue").textContent =
+    money(done.reduce(function (s, o) { return s + (o.amount || 0); }, 0));
+  document.getElementById("sPending").textContent = pend.length;
+
+  var body = document.querySelector("#oTbl tbody");
+  body.innerHTML = orders.map(function (o) {
+    return "<tr>" +
+      "<td class='mono' style='font-size:12px'>" + (o.merchantOrderId || "") + "</td>" +
+      "<td>" + money(o.amount) + "</td>" +
+      "<td><span class='chip " + (o.state || "") + "'>" + (o.state || "?") + "</span></td>" +
+      "<td style='font-size:12.5px'>" + when(o.createdAt) + "</td>" +
+      "</tr>";
+  }).join("");
+  document.getElementById("oEmpty").className = orders.length ? "empty hide" : "empty";
+}
+
+async function loadRefunds() {
+  var res = await fetch("/api/merchant/refunds");
+  if (res.status === 401) { toLogin(); return; }
+  var refunds = (await res.json()).refunds || [];
+  document.getElementById("sRefunds").textContent = refunds.length;
+
+  var body = document.querySelector("#rTbl tbody");
+  body.innerHTML = refunds.map(function (r) {
+    return "<tr>" +
+      "<td class='mono' style='font-size:12px'>" + (r.merchantRefundId || "") + "</td>" +
+      "<td class='mono' style='font-size:12px'>" + (r.originalMerchantOrderId || "") + "</td>" +
+      "<td>" + money(r.amount) + "</td>" +
+      "<td><span class='chip " + (r.state || "") + "'>" + (r.state || "?") + "</span></td>" +
+      "<td style='font-size:12.5px'>" + when(r.createdAt) + "</td>" +
+      "</tr>";
+  }).join("");
+  document.getElementById("rEmpty").className = refunds.length ? "empty hide" : "empty";
+}
+
+async function loadKeys() {
+  var box = document.getElementById("keyList");
+  var res = await fetch("/api/merchant/keys");
+  if (res.status === 401) { toLogin(); return; }
+  var keys = (await res.json()).keys || [];
+
+  if (!keys.length) {
+    box.innerHTML = "<p style='margin:0'>No keys yet.</p>";
+    return;
+  }
+  keys.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+  box.innerHTML = "<div class='tablewrap'><table><thead><tr>" +
+    "<th>Key ID</th><th>Secret</th><th>Status</th><th>Last used</th><th></th>" +
+    "</tr></thead><tbody>" +
+    keys.map(function (k) {
+      var active = k.status === "ACTIVE";
+      return "<tr>" +
+        "<td class='mono' style='font-size:12px'>" + k.keyId + "</td>" +
+        "<td class='mono' style='color:#8A83A6'>sk_" + (k.env || "test") + "_\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</td>" +
+        "<td><span class='chip " + k.status + "'>" + k.status + "</span></td>" +
+        "<td style='font-size:12.5px'>" + (k.lastUsedAt ? when(k.lastUsedAt) : "never") + "</td>" +
+        "<td>" + (active ? "<button class='ghost' onclick=\"revokeKey('" + k.keyId + "')\">Revoke</button>" : "") + "</td>" +
+        "</tr>";
+    }).join("") + "</tbody></table></div>";
+}
+
+async function genKey() {
+  var btn = document.getElementById("genBtn");
+  btn.disabled = true;
+  try {
+    var res = await fetch("/api/merchant/keys", { method: "POST" });
+    var data = await res.json();
+    if (res.ok) {
+      lastSecret = data.secret;
+      document.getElementById("nkId").textContent = data.keyId;
+      document.getElementById("nkSecret").textContent = data.secret;
+      document.getElementById("newKey").className = "newkey";
+      loadKeys();
+    } else {
+      alert(data.error || "Could not generate a key");
+    }
+  } catch (e) {
+    alert("Could not reach PayPe");
+  }
+  btn.disabled = false;
+}
+
+async function revokeKey(keyId) {
+  if (!confirm("Revoke " + keyId + "? Anything using it stops working immediately.")) return;
+  await fetch("/api/merchant/keys/" + keyId + "/revoke", { method: "POST" });
+  loadKeys();
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(payLinkValue);
+  var b = document.getElementById("copyBtn");
+  b.textContent = "Copied";
+  setTimeout(function () { b.textContent = "Copy link"; }, 1400);
+}
+
+function copySecret() {
+  if (lastSecret) navigator.clipboard.writeText(lastSecret);
+}
+
+async function signOut() {
+  await fetch("/api/merchant/logout", { method: "POST" });
+  toLogin();
+}
+
+load();
+</script>
+</body>
+</html>

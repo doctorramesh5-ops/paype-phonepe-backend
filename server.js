@@ -211,7 +211,7 @@ app.post("/api/phonepe-webhook", async (req, res) => {
 });
 
 // REFUND — POST /payments/v2/refund
-app.post("/api/refund", async (req, res) => {
+app.post("/api/refund", require("./admin").requireAdmin, async (req, res) => {
   try {
     const { merchantOrderId, amount } = req.body;
     const amountPaise = Math.round(Number(amount) * 100);
@@ -309,6 +309,13 @@ app.get("/api/refund-status/:merchantRefundId", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ---- Merchant portal (OTP login) ----
+app.use(require("./merchantauth"));
+
+// ---- Authenticated merchant API (v1) ----
+const merchantApi = require("./merchantapi");
+app.use(merchantApi({ getAuthToken, tspHeaders, baseUrl: PHONEPE_BASE_URL }));
 
 if (require.main === module) {
   app.listen(PORT, () => {

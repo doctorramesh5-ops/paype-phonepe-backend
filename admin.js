@@ -108,7 +108,7 @@ router.post("/api/admin/merchants", requireAdmin, async (req, res) => {
       mid: mid.trim(),
       domain: domain.trim().replace(/\/+$/, ""),
       contactName: (contactName || "").trim(),
-      email: (email || "").trim(),
+      email: (email || "").trim().toLowerCase(),
       phone: (phone || "").trim(),
       status: "ACTIVE",
     };
@@ -145,3 +145,36 @@ router.post("/api/admin/merchants/:merchantId/status", requireAdmin, async (req,
     res.status(500).json({ error: err.message });
   }
 });
+
+// ============ API KEY MANAGEMENT (admin only) ============
+const { issueKey } = require("./apikeys");
+
+router.post("/api/admin/merchants/:merchantId/keys", requireAdmin, async (req, res) => {
+  try {
+    const merchant = await db.getMerchant(req.params.merchantId);
+    if (!merchant) return res.status(404).json({ error: "Merchant not found" });
+    const env = req.body && req.body.env === "live" ? "live" : "test";
+    const key = await issueKey(merchant.merchantId, env);
+    console.log("🔑 Key issued:", key.keyId, "→", merchant.merchantId);
+    res.json({ ok: true, ...key, warning: "Copy the secret now - it cannot be shown again" });
+  } catch (err) {
+    console.error("❌ issue key error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/api/admin/merchants/:merchantId/keys", requireAdmin, async (req, res) => {
+  try {
+    res.json({ keys: await db.getApiKeysForMerchant(req.params.merchantId) });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post("/api/admin/keys/:keyId/revoke", requireAdmin, async (req, res) => {
+  try {
+    await db.revokeApiKey(req.params.keyId);
+    console.log("🔑 Key revoked:", req.params.keyId);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+module.exports.requireAdmin = requireAdmin;

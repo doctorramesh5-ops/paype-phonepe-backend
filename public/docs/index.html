@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PayPe Developer Docs · Payments API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16112E;
+    --ink-soft:#544D74;
+    --ink-faint:#8A83A6;
+    --violet:#5B2EDD;
+    --violet-deep:#3E1FA0;
+    --violet-wash:#F1EDFE;
+    --mist:#F7F5FC;
+    --paper:#FFFFFF;
+    --rule:#E4DFF3;
+    --code-bg:#171233;
+    --code-ink:#E8E4FA;
+    --teal:#0B7C6E;
+    --teal-wash:#E0F5F1;
+    --amber:#9A5B08;
+    --amber-wash:#FDF2DC;
+    --rose:#A81F2E;
+    --rose-wash:#FCE9EB;
+    --sidebar-w:250px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;scroll-padding-top:88px;}
+  body{
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    background:var(--mist);color:var(--ink);
+    font-size:15px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  code,kbd,pre,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+  h1,h2,h3,h4{font-family:"Sora",system-ui,sans-serif;line-height:1.2;letter-spacing:-0.02em;}
+  a{color:var(--violet-deep);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  :focus-visible{outline:2.5px solid var(--violet);outline-offset:3px;border-radius:3px;}
+
+  /* ---------- Draft ribbon ---------- */
+  .ribbon{
+    position:fixed;top:0;left:0;right:0;z-index:60;
+    background:var(--amber-wash);color:var(--amber);
+    border-bottom:1px solid #F0DDB4;
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    letter-spacing:.06em;text-transform:uppercase;
+    padding:7px 16px;text-align:center;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .side{
+    position:fixed;top:32px;bottom:0;left:0;width:var(--sidebar-w);z-index:50;
+    background:var(--paper);border-right:1px solid var(--rule);
+    padding:24px 0 40px;overflow-y:auto;
+  }
+  .side-brand{padding:0 22px 20px;border-bottom:1px solid var(--rule);margin-bottom:18px;}
+  .side-brand .name{font-family:"Sora";font-weight:700;font-size:21px;color:var(--violet-deep);letter-spacing:-0.03em;}
+  .side-brand .kicker{
+    font-family:"IBM Plex Mono";font-size:10.5px;color:var(--ink-faint);
+    letter-spacing:.12em;text-transform:uppercase;margin-top:3px;
+  }
+  .side nav{padding:0 12px;}
+  .nav-group{
+    font-family:"IBM Plex Mono";font-size:10.5px;color:var(--ink-faint);
+    letter-spacing:.12em;text-transform:uppercase;
+    padding:16px 10px 6px;
+  }
+  .side nav a{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:7px 10px;border-radius:7px;
+    color:var(--ink-soft);font-size:14px;font-weight:500;
+  }
+  .side nav a:hover{background:var(--violet-wash);color:var(--violet-deep);text-decoration:none;}
+  .side nav a.on{background:var(--violet-wash);color:var(--violet-deep);}
+  .mini{
+    font-family:"IBM Plex Mono";font-size:9.5px;font-weight:500;
+    padding:2px 5px;border-radius:4px;letter-spacing:.05em;
+  }
+  .mini.live{background:var(--teal-wash);color:var(--teal);}
+  .mini.spec{background:var(--violet-wash);color:var(--violet-deep);}
+  .mini.plan{background:#EFEDF5;color:var(--ink-faint);}
+
+  .menu-btn{display:none;}
+
+  /* ---------- Main ---------- */
+  main{margin-left:var(--sidebar-w);padding:32px 0 0;}
+  .wrap{max-width:800px;padding:44px 40px 100px;}
+  section{padding-top:44px;margin-top:-8px;}
+  section + section{border-top:1px solid var(--rule);margin-top:48px;}
+
+  .eyebrow{
+    font-family:"IBM Plex Mono";font-size:11px;color:var(--violet);
+    letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;
+  }
+  h1{font-size:40px;font-weight:700;margin-bottom:14px;}
+  h2{font-size:26px;font-weight:600;margin-bottom:12px;}
+  h3{font-size:17px;font-weight:600;margin:26px 0 8px;}
+  p{color:var(--ink-soft);margin-bottom:14px;max-width:66ch;}
+  p strong{color:var(--ink);font-weight:600;}
+  .lead{font-size:17px;color:var(--ink-soft);max-width:60ch;}
+  ul,ol{color:var(--ink-soft);margin:0 0 14px 20px;}
+  li{margin-bottom:6px;}
+
+  /* ---------- Lifecycle signature ---------- */
+  .lifecycle{
+    background:var(--paper);border:1px solid var(--rule);border-radius:14px;
+    padding:26px 24px;margin:26px 0;
+  }
+  .lifecycle h4{
+    font-family:"IBM Plex Mono";font-size:11px;color:var(--ink-faint);font-weight:500;
+    letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px;
+  }
+  .states{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .state{
+    font-family:"IBM Plex Mono";font-size:12.5px;font-weight:500;
+    padding:8px 13px;border-radius:8px;border:1px solid transparent;white-space:nowrap;
+  }
+  .state.created{background:#EFEDF5;color:var(--ink-soft);}
+  .state.pending{background:var(--amber-wash);color:var(--amber);border-color:#F0DDB4;}
+  .state.done{background:var(--teal-wash);color:var(--teal);border-color:#B9E5DD;}
+  .state.fail{background:var(--rose-wash);color:var(--rose);border-color:#F3CBD0;}
+  .arrow{color:var(--ink-faint);font-size:15px;}
+  .branch{display:flex;flex-direction:column;gap:8px;}
+  .terminal-note{
+    margin-top:20px;padding-top:18px;border-top:1px dashed var(--rule);
+    font-size:14px;color:var(--ink-soft);
+  }
+  .terminal-note b{color:var(--ink);}
+
+  /* ---------- Reconciliation ladder ---------- */
+  .ladder{margin:18px 0 4px;display:flex;flex-direction:column;gap:5px;}
+  .rung{display:flex;align-items:center;gap:12px;font-size:13.5px;color:var(--ink-soft);}
+  .rung .bar{
+    height:9px;border-radius:3px;background:linear-gradient(90deg,var(--violet),#9B7BF0);
+    flex-shrink:0;
+  }
+  .rung .lbl{font-family:"IBM Plex Mono";font-size:12px;color:var(--ink);white-space:nowrap;}
+
+  /* ---------- Callouts ---------- */
+  .note{
+    border-radius:11px;padding:16px 18px;margin:20px 0;font-size:14.5px;
+    border:1px solid;
+  }
+  .note p{margin:0;color:inherit;}
+  .note p + p{margin-top:8px;}
+  .note .tag{
+    font-family:"IBM Plex Mono";font-size:10.5px;font-weight:500;
+    letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:6px;
+  }
+  .note.build{background:var(--amber-wash);border-color:#F0DDB4;color:#6B4206;}
+  .note.build .tag{color:var(--amber);}
+  .note.info{background:var(--violet-wash);border-color:#DCD2FB;color:#332364;}
+  .note.info .tag{color:var(--violet-deep);}
+  .note code{background:rgba(0,0,0,.07);padding:1px 5px;border-radius:4px;font-size:13px;}
+
+  /* ---------- Endpoint blocks ---------- */
+  .ep{
+    background:var(--paper);border:1px solid var(--rule);border-radius:13px;
+    overflow:hidden;margin:22px 0;
+  }
+  .ep-head{
+    display:flex;align-items:center;gap:11px;flex-wrap:wrap;
+    padding:15px 18px;border-bottom:1px solid var(--rule);background:#FCFBFE;
+  }
+  .verb{
+    font-family:"IBM Plex Mono";font-size:11px;font-weight:500;letter-spacing:.06em;
+    padding:4px 8px;border-radius:5px;color:#fff;
+  }
+  .verb.post{background:var(--violet);}
+  .verb.get{background:var(--teal);}
+  .path{font-family:"IBM Plex Mono";font-size:13.5px;color:var(--ink);font-weight:500;word-break:break-all;}
+  .ep-head .mini{margin-left:auto;}
+  .ep-body{padding:18px;}
+  .ep-body > p:first-child{margin-top:0;}
+  .ep-body > *:last-child{margin-bottom:0;}
+
+  /* ---------- Code ---------- */
+  .code{
+    position:relative;background:var(--code-bg);border-radius:10px;
+    margin:14px 0;overflow:hidden;
+  }
+  .code-top{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.09);
+  }
+  .code-top span{
+    font-family:"IBM Plex Mono";font-size:10.5px;color:#A99FD6;
+    letter-spacing:.1em;text-transform:uppercase;
+  }
+  .copy{
+    background:rgba(255,255,255,.09);border:0;color:#CFC8EE;cursor:pointer;
+    font-family:"IBM Plex Mono";font-size:11px;padding:4px 9px;border-radius:5px;
+  }
+  .copy:hover{background:rgba(255,255,255,.17);color:#fff;}
+  pre{
+    padding:15px;overflow-x:auto;font-size:12.5px;line-height:1.7;
+    color:var(--code-ink);
+  }
+  .k{color:#9BB8FF;}   /* keys */
+  .s{color:#8DE0C0;}   /* strings */
+  .n{color:#FFC98D;}   /* numbers */
+  .c{color:#7D74A8;}   /* comments */
+
+  /* ---------- Tables ---------- */
+  .tbl{
+    background:var(--paper);border:1px solid var(--rule);border-radius:11px;
+    overflow-x:auto;margin:16px 0;
+  }
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:440px;}
+  th{
+    text-align:left;padding:11px 14px;border-bottom:1px solid var(--rule);
+    font-family:"IBM Plex Mono";font-size:10.5px;color:var(--ink-faint);
+    font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  }
+  td{padding:11px 14px;border-bottom:1px solid #F2EFFA;color:var(--ink-soft);vertical-align:top;}
+  tr:last-child td{border-bottom:0;}
+  td .mono{color:var(--ink);font-size:12.5px;}
+  td .req{color:var(--rose);font-size:11px;font-family:"IBM Plex Mono";}
+
+  /* ---------- Paise converter ---------- */
+  .paise{
+    background:var(--paper);border:1px solid var(--rule);border-radius:12px;
+    padding:18px;margin:20px 0;
+  }
+  .paise-row{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;}
+  .paise-f{flex:1;min-width:130px;}
+  .paise label{
+    display:block;font-family:"IBM Plex Mono";font-size:10.5px;color:var(--ink-faint);
+    letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;
+  }
+  .paise input{
+    width:100%;border:1.5px solid var(--rule);border-radius:8px;padding:10px 12px;
+    font-family:"IBM Plex Mono";font-size:16px;color:var(--ink);outline:0;background:var(--mist);
+  }
+  .paise input:focus{border-color:var(--violet);background:#fff;}
+  .paise-out{
+    font-family:"IBM Plex Mono";font-size:22px;font-weight:500;color:var(--violet-deep);
+    padding:8px 0;
+  }
+  .paise .hint{font-size:13px;color:var(--ink-faint);margin:12px 0 0;}
+
+  /* ---------- Roadmap ---------- */
+  .road{display:grid;gap:11px;margin:20px 0;}
+  .road-item{
+    background:var(--paper);border:1px solid var(--rule);border-radius:11px;
+    padding:15px 17px;display:flex;align-items:flex-start;gap:14px;
+  }
+  .road-item .txt{flex:1;}
+  .road-item h4{font-family:"Sora";font-size:15px;font-weight:600;margin-bottom:3px;}
+  .road-item p{font-size:13.5px;margin:0;}
+
+  footer{
+    margin-left:var(--sidebar-w);border-top:1px solid var(--rule);
+    background:var(--paper);padding:26px 40px;
+  }
+  footer p{font-size:13px;color:var(--ink-faint);max-width:none;margin:0;}
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:900px){
+    .menu-btn{
+      display:block;position:fixed;top:40px;left:12px;z-index:70;
+      background:var(--paper);border:1px solid var(--rule);border-radius:9px;
+      padding:9px 13px;font-family:"IBM Plex Mono";font-size:12px;
+      color:var(--violet-deep);cursor:pointer;font-weight:500;
+      box-shadow:0 3px 12px rgba(22,17,46,.09);
+    }
+    .side{transform:translateX(-100%);transition:transform .22s ease;width:270px;
+      box-shadow:6px 0 26px rgba(22,17,46,.13);}
+    .side.open{transform:translateX(0);}
+    main,footer{margin-left:0;}
+    .wrap{padding:74px 20px 80px;}
+    footer{padding:22px 20px;}
+    h1{font-size:31px;}
+    h2{font-size:22px;}
+    .states{gap:7px;}
+    .state{font-size:11.5px;padding:7px 10px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    .side{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="ribbon">Draft · Sandbox documentation · Not for public release</div>
+<button class="menu-btn" onclick="toggleNav()" aria-label="Toggle navigation">Menu</button>
+
+<aside class="side" id="side">
+  <div class="side-brand">
+    <div class="name">PayPe</div>
+    <div class="kicker">Developer Docs · v2</div>
+  </div>
+  <nav>
+    <div class="nav-group">Getting started</div>
+    <a href="#overview">Overview</a>
+    <a href="#lifecycle">Payment lifecycle</a>
+    <a href="#quickstart">Quickstart</a>
+    <a href="#amounts">Amounts &amp; IDs</a>
+
+    <div class="nav-group">Authentication</div>
+    <a href="#keys">API keys <span class="mini spec">Spec</span></a>
+
+    <div class="nav-group">Payments API</div>
+    <a href="#checkout">Hosted checkout <span class="mini live">Live</span></a>
+    <a href="#create">Create payment <span class="mini live">Live</span></a>
+    <a href="#status">Order status <span class="mini live">Live</span></a>
+    <a href="#refund">Refund <span class="mini live">Live</span></a>
+    <a href="#refund-status">Refund status <span class="mini live">Live</span></a>
+
+    <div class="nav-group">Events</div>
+    <a href="#webhooks">Webhooks <span class="mini spec">Spec</span></a>
+    <a href="#reconcile">Reconciliation <span class="mini live">Live</span></a>
+
+    <div class="nav-group">Reference</div>
+    <a href="#errors">Errors</a>
+    <a href="#testing">Test in sandbox</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</aside>
+
+<main>
+<div class="wrap">
+
+<!-- ============ OVERVIEW ============ -->
+<section id="overview" style="padding-top:0;">
+  <div class="eyebrow">PayPe Technologies · Coimbatore</div>
+  <h1>Payments API</h1>
+  <p class="lead">Accept UPI, cards and net banking on your website. PayPe handles the
+  gateway integration, status reconciliation and refunds; you make three API calls.</p>
+
+  <div class="note info">
+    <span class="tag">Base URLs</span>
+    <p>Sandbox &nbsp;<code>https://api.paype.co.in</code></p>
+    <p>Production &nbsp;<code>https://api.paype.co.in</code> &nbsp;— same host, keyed by your credentials</p>
+  </div>
+
+  <h3>What you need before starting</h3>
+  <ul>
+    <li>A PayPe merchant account — you receive a <span class="mono">MER…</span> merchant ID</li>
+    <li>Your website domain, registered with us (sent to the gateway on every charge)</li>
+    <li>A server that can make HTTPS requests and receive them</li>
+  </ul>
+
+  <h3>Two ways to integrate</h3>
+  <p><strong>Hosted checkout</strong> is a single link. No server code, no keys — send the
+  customer to a PayPe page and we return them to yours. Start here.</p>
+  <p><strong>Server APIs</strong> give you control over the amount, order ID and redirect
+  target, and let you query status and issue refunds from your own backend.</p>
+</section>
+
+<!-- ============ LIFECYCLE ============ -->
+<section id="lifecycle">
+  <h2>Payment lifecycle</h2>
+  <p>Every payment holds exactly one state. Two of them are final; one is not.</p>
+
+  <div class="lifecycle">
+    <h4>State transitions</h4>
+    <div class="states">
+      <span class="state created">CREATED</span>
+      <span class="arrow">→</span>
+      <span class="state pending">PENDING</span>
+      <span class="arrow">→</span>
+      <div class="branch">
+        <span class="state done">COMPLETED</span>
+        <span class="state fail">FAILED</span>
+      </div>
+    </div>
+    <p class="terminal-note">
+      <b>COMPLETED</b> and <b>FAILED</b> are terminal — they never change again.
+      <b>PENDING</b> is not a result. A customer who closed their browser mid-payment
+      leaves an order in PENDING, and it may still succeed at the bank.
+      Never mark an order paid, and never ship goods, on anything but a terminal state.
+    </p>
+  </div>
+
+  <div class="note build">
+    <span class="tag">The one mistake that costs money</span>
+    <p>Do not treat the browser redirect back to your site as confirmation. A customer can
+    close the tab, lose signal, or press back. Confirm from the
+    <a href="#status">Order status</a> endpoint or a <a href="#webhooks">webhook</a> — those
+    are the only sources of truth.</p>
+  </div>
+</section>
+
+<!-- ============ QUICKSTART ============ -->
+<section id="quickstart">
+  <h2>Quickstart</h2>
+  <p>Take a test payment in about two minutes.</p>
+
+  <h3>1. Send the customer to checkout</h3>
+  <p>Replace the merchant ID with your own. This link works today, with no keys required.</p>
+  <div class="code">
+    <div class="code-top"><span>Hosted checkout link</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>https://api.paype.co.in/?merchant=<span class="s">MER1783999043172</span></pre>
+  </div>
+
+  <h3>2. Customer pays</h3>
+  <p>PayPe shows the payment page, the customer chooses UPI, card or net banking, and
+  we return them to your result page with the order ID appended.</p>
+
+  <h3>3. Confirm the result from your server</h3>
+  <div class="code">
+    <div class="code-top"><span>cURL</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>curl https://api.paype.co.in/api/order-status/<span class="s">PAYPE1783999272545</span></pre>
+  </div>
+  <div class="code">
+    <div class="code-top"><span>Response</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>{
+  <span class="k">"state"</span>: <span class="s">"COMPLETED"</span>,
+  <span class="k">"amount"</span>: <span class="n">1000</span>,
+  <span class="k">"orderId"</span>: <span class="s">"OMO2607140912466357046693"</span>
+}</pre>
+  </div>
+  <p>Read <span class="mono">state</span> at the root of the response. Nothing else decides
+  whether the customer paid.</p>
+</section>
+
+<!-- ============ AMOUNTS ============ -->
+<section id="amounts">
+  <h2>Amounts &amp; identifiers</h2>
+
+  <h3>Amounts are in paise</h3>
+  <p>Every amount in every request and response is an integer in paise. Sending
+  <span class="mono">100</span> charges one rupee, not one hundred. Rounding errors here
+  become refund disputes later, so convert once, in one place in your code.</p>
+
+  <div class="paise">
+    <div class="paise-row">
+      <div class="paise-f">
+        <label for="rs">Rupees</label>
+        <input id="rs" type="number" value="149.50" step="0.01" min="0" oninput="conv()" />
+      </div>
+      <div class="paise-f">
+        <label for="ps">Send this value</label>
+        <div class="paise-out mono" id="ps">14950</div>
+      </div>
+    </div>
+    <p class="hint">amount = Math.round(rupees × 100)</p>
+  </div>
+
+  <h3>Order IDs</h3>
+  <p>You may supply your own <span class="mono">merchantOrderId</span>, or let PayPe
+  generate one. Either way it must be unique for every attempt, under 63 characters, and
+  contain only letters, numbers, hyphens and underscores.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Identifier</th><th>Issued by</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">merchantOrderId</span></td><td>You or PayPe</td><td><span class="mono">PAYPE1783999272545</span></td></tr>
+        <tr><td><span class="mono">orderId</span></td><td>Gateway</td><td><span class="mono">OMO2607140912466357046693</span></td></tr>
+        <tr><td><span class="mono">merchantRefundId</span></td><td>PayPe</td><td><span class="mono">REFUND1783997069495</span></td></tr>
+        <tr><td><span class="mono">utr</span> / <span class="mono">arn</span></td><td>Bank</td><td><span class="mono">455226570184</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Keep the bank reference — UTR for UPI, ARN or BRN for cards and net banking. It is
+  what a bank asks for when a customer disputes a charge.</p>
+</section>
+
+<!-- ============ KEYS ============ -->
+<section id="keys">
+  <h2>API keys <span class="mini spec">Spec</span></h2>
+  <p>Server-to-server calls will be authenticated with a key pair issued per merchant from
+  your dashboard: a key ID you may expose, and a secret you must not.</p>
+
+  <div class="code">
+    <div class="code-top"><span>Request headers</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>X-PayPe-Key-Id: <span class="s">pk_live_8f3ef32ad3fc</span>
+X-PayPe-Signature: <span class="s">HMAC-SHA256(body, secret)</span>
+Content-Type: application/json</pre>
+  </div>
+
+  <h3>Keeping the secret secret</h3>
+  <ul>
+    <li>Server side only. Never in browser JavaScript, mobile app binaries, or a repository.</li>
+    <li>Store it in your hosting platform's environment settings, not in a file you commit.</li>
+    <li>Rotate it from the dashboard if it is ever exposed. Old keys stop working immediately.</li>
+  </ul>
+
+  <div class="note build">
+    <span class="tag">Before publishing these docs</span>
+    <p>Per-merchant keys are not implemented yet. Today the server APIs accept a
+    <code>merchantId</code> with no signature, which is safe only while the endpoints are
+    used by PayPe's own pages. Issue keys and verify the signature before any external
+    merchant is given server API access.</p>
+  </div>
+</section>
+
+<!-- ============ HOSTED CHECKOUT ============ -->
+<section id="checkout">
+  <h2>Hosted checkout <span class="mini live">Live</span></h2>
+  <p>The fastest integration, and the one with the least to get wrong. Link or redirect the
+  customer to your PayPe checkout URL.</p>
+
+  <div class="code">
+    <div class="code-top"><span>HTML</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>&lt;a href="https://api.paype.co.in/?merchant=<span class="s">MER1783999043172</span>"&gt;
+  Pay with PayPe
+&lt;/a&gt;</pre>
+  </div>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Query parameter</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="mono">merchant</span> <span class="req">required</span></td>
+          <td>Your merchant ID. Determines which account the payment settles to, and which
+          domain is declared to the gateway.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>If your account is suspended, checkout refuses the payment before the customer reaches
+  the gateway. An unknown merchant ID is rejected the same way.</p>
+</section>
+
+<!-- ============ CREATE ============ -->
+<section id="create">
+  <h2>Create payment <span class="mini live">Live</span></h2>
+
+  <div class="ep">
+    <div class="ep-head">
+      <span class="verb post">POST</span>
+      <span class="path">/api/create-payment</span>
+      <span class="mini live">Live</span>
+    </div>
+    <div class="ep-body">
+      <p>Creates an order and returns the gateway URL to send the customer to. The order is
+      recorded as PENDING and tracked until it reaches a terminal state.</p>
+
+      <h3>Body</h3>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="mono">amount</span> <span class="req">required</span></td><td>number</td><td>Amount in rupees. Converted to paise server side.</td></tr>
+            <tr><td><span class="mono">merchantId</span></td><td>string</td><td>Your <span class="mono">MER…</span> ID. Omit only for PayPe's own test page.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code">
+        <div class="code-top"><span>Request</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>curl -X POST https://api.paype.co.in/api/create-payment \
+  -H <span class="s">'Content-Type: application/json'</span> \
+  -d <span class="s">'{"amount": 149.50, "merchantId": "MER1783999043172"}'</span></pre>
+      </div>
+
+      <div class="code">
+        <div class="code-top"><span>201 Response</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>{
+  <span class="k">"merchantOrderId"</span>: <span class="s">"PAYPE1783999272545"</span>,
+  <span class="k">"redirectUrl"</span>: <span class="s">"https://mercury.phonepe.com/transact/…"</span>
+}</pre>
+      </div>
+
+      <p>Send the customer to <span class="mono">redirectUrl</span>. Store
+      <span class="mono">merchantOrderId</span> against your own order record — you need it
+      to check status and to refund.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATUS ============ -->
+<section id="status">
+  <h2>Order status <span class="mini live">Live</span></h2>
+
+  <div class="ep">
+    <div class="ep-head">
+      <span class="verb get">GET</span>
+      <span class="path">/api/order-status/{merchantOrderId}</span>
+      <span class="mini live">Live</span>
+    </div>
+    <div class="ep-body">
+      <p>Returns the current state of an order. Safe to call as often as you need; this is
+      the endpoint to trust when deciding whether a customer has paid.</p>
+
+      <div class="code">
+        <div class="code-top"><span>200 Response</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>{
+  <span class="k">"state"</span>: <span class="s">"COMPLETED"</span>,
+  <span class="k">"amount"</span>: <span class="n">14950</span>,
+  <span class="k">"orderId"</span>: <span class="s">"OMO2607140912466357046693"</span>,
+  <span class="k">"paymentDetails"</span>: [
+    {
+      <span class="k">"paymentMode"</span>: <span class="s">"UPI_QR"</span>,
+      <span class="k">"state"</span>: <span class="s">"COMPLETED"</span>,
+      <span class="k">"rail"</span>: { <span class="k">"utr"</span>: <span class="s">"455226570184"</span> }
+    }
+  ]
+}</pre>
+      </div>
+
+      <div class="note info">
+        <span class="tag">Read the root state</span>
+        <p>Use the top-level <code>state</code>. The entries inside
+        <code>paymentDetails</code> describe individual attempts — a customer may fail once
+        on a card and then succeed on UPI, and only the root state accounts for that.</p>
+      </div>
+
+      <p>Treat unknown fields as normal. New payment methods add new keys, and a parser that
+      rejects anything unexpected will break on the day we add one.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REFUND ============ -->
+<section id="refund">
+  <h2>Refund <span class="mini live">Live</span></h2>
+
+  <div class="ep">
+    <div class="ep-head">
+      <span class="verb post">POST</span>
+      <span class="path">/api/refund</span>
+      <span class="mini live">Live</span>
+    </div>
+    <div class="ep-body">
+      <p>Refunds all or part of a completed payment. Partial refunds may be issued
+      repeatedly until the original amount is exhausted.</p>
+
+      <h3>Body</h3>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><span class="mono">merchantOrderId</span> <span class="req">required</span></td><td>string</td><td>The order being refunded.</td></tr>
+            <tr><td><span class="mono">amount</span> <span class="req">required</span></td><td>number</td><td>Amount in rupees, up to the refundable balance.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code">
+        <div class="code-top"><span>Request</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>curl -X POST https://api.paype.co.in/api/refund \
+  -H <span class="s">'Content-Type: application/json'</span> \
+  -d <span class="s">'{"merchantOrderId": "PAYPE1783999272545", "amount": 50}'</span></pre>
+      </div>
+
+      <div class="code">
+        <div class="code-top"><span>200 Response</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>{
+  <span class="k">"merchantRefundId"</span>: <span class="s">"REFUND1783997069495"</span>,
+  <span class="k">"amount"</span>: <span class="n">5000</span>,
+  <span class="k">"state"</span>: <span class="s">"PENDING"</span>
+}</pre>
+      </div>
+
+      <h3>What gets checked first</h3>
+      <p>Three conditions are verified against PayPe's own records before any money moves:</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Condition</th><th>If it fails</th></tr></thead>
+          <tbody>
+            <tr><td>The order exists</td><td><span class="mono">404</span> Order not found in our records</td></tr>
+            <tr><td>The order is COMPLETED</td><td><span class="mono">400</span> Only COMPLETED orders can be refunded</td></tr>
+            <tr><td>Refunds so far + this one ≤ original</td><td><span class="mono">400</span> Refund exceeds refundable balance</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The balance error returns the arithmetic — original amount, already refunded, and
+      remaining — so you can show the customer an accurate figure rather than a generic
+      failure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REFUND STATUS ============ -->
+<section id="refund-status">
+  <h2>Refund status <span class="mini live">Live</span></h2>
+
+  <div class="ep">
+    <div class="ep-head">
+      <span class="verb get">GET</span>
+      <span class="path">/api/refund-status/{merchantRefundId}</span>
+      <span class="mini live">Live</span>
+    </div>
+    <div class="ep-body">
+      <p>Refunds start PENDING and usually settle within seconds, though bank processing can
+      take longer. Poll this endpoint, or wait for the refund webhook.</p>
+      <div class="code">
+        <div class="code-top"><span>200 Response</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>{
+  <span class="k">"state"</span>: <span class="s">"COMPLETED"</span>,
+  <span class="k">"amount"</span>: <span class="n">5000</span>,
+  <span class="k">"originalMerchantOrderId"</span>: <span class="s">"PAYPE1783999272545"</span>,
+  <span class="k">"splitInstruments"</span>: [
+    { <span class="k">"rail"</span>: { <span class="k">"utr"</span>: <span class="s">"455226570184"</span> } }
+  ]
+}</pre>
+      </div>
+      <p>Give the customer the UTR or ARN once the refund completes. It answers the
+      "where is my money" question better than a date ever does.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WEBHOOKS ============ -->
+<section id="webhooks">
+  <h2>Webhooks <span class="mini spec">Spec</span></h2>
+  <p>Rather than polling, register an HTTPS endpoint and PayPe will notify you when a
+  payment or refund reaches a terminal state.</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Event</th><th>Sent when</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">payment.completed</span></td><td>A payment succeeded</td></tr>
+        <tr><td><span class="mono">payment.failed</span></td><td>A payment failed or expired</td></tr>
+        <tr><td><span class="mono">refund.completed</span></td><td>A refund reached the customer</td></tr>
+        <tr><td><span class="mono">refund.failed</span></td><td>A refund could not be processed</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code">
+    <div class="code-top"><span>Payload</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre>{
+  <span class="k">"event"</span>: <span class="s">"payment.completed"</span>,
+  <span class="k">"payload"</span>: {
+    <span class="k">"merchantOrderId"</span>: <span class="s">"PAYPE1783999272545"</span>,
+    <span class="k">"state"</span>: <span class="s">"COMPLETED"</span>,
+    <span class="k">"amount"</span>: <span class="n">14950</span>
+  }
+}</pre>
+  </div>
+
+  <h3>Verify every webhook before trusting it</h3>
+  <p>Anyone can send a POST to your endpoint. Compute the expected signature from your
+  webhook secret and compare — reject with 401 if it does not match.</p>
+
+  <div class="code">
+    <div class="code-top"><span>Node.js</span><button class="copy" onclick="cp(this)">Copy</button></div>
+<pre><span class="c">// req.rawBody is the unparsed request body</span>
+<span class="k">const</span> expected = crypto
+  .createHmac(<span class="s">"sha256"</span>, process.env.PAYPE_WEBHOOK_SECRET)
+  .update(req.rawBody)
+  .digest(<span class="s">"hex"</span>);
+
+<span class="k">if</span> (req.headers[<span class="s">"x-paype-signature"</span>] !== expected) {
+  <span class="k">return</span> res.status(<span class="n">401</span>).json({ error: <span class="s">"unauthorized"</span> });
+}
+
+<span class="c">// Verified. Use payload.state, and reply 200 quickly.</span>
+res.status(<span class="n">200</span>).json({ received: <span class="k">true</span> });</pre>
+  </div>
+
+  <h3>Rules for your handler</h3>
+  <ul>
+    <li><strong>Reply 200 fast.</strong> Do slow work afterwards. Timeouts trigger retries.</li>
+    <li><strong>Expect duplicates.</strong> The same event may arrive twice. Check whether
+    you have already processed that order before acting on it.</li>
+    <li><strong>Read the root state,</strong> and identify the event from
+    <span class="mono">event</span>.</li>
+    <li><strong>Webhooks are not a guarantee.</strong> Networks fail. Keep
+    <a href="#status">Order status</a> as your fallback.</li>
+  </ul>
+
+  <div class="note build">
+    <span class="tag">Before publishing these docs</span>
+    <p>Merchant-facing webhooks are not built yet. PayPe currently receives webhooks from the
+    gateway but does not forward events to merchants. Needed: a webhook URL and secret per
+    merchant, a signed delivery, and a retry schedule.</p>
+  </div>
+</section>
+
+<!-- ============ RECONCILIATION ============ -->
+<section id="reconcile">
+  <h2>Reconciliation <span class="mini live">Live</span></h2>
+  <p>PayPe chases every PENDING order on your behalf until it resolves, so an abandoned
+  checkout still ends up with a correct final state in your dashboard.</p>
+
+  <div class="lifecycle">
+    <h4>Polling schedule per pending order</h4>
+    <div class="ladder">
+      <div class="rung"><span class="bar" style="width:26px"></span><span class="lbl">every 3s</span> for the first 30 seconds</div>
+      <div class="rung"><span class="bar" style="width:52px"></span><span class="lbl">every 6s</span> for the next minute</div>
+      <div class="rung"><span class="bar" style="width:86px"></span><span class="lbl">every 10s</span> for the next minute</div>
+      <div class="rung"><span class="bar" style="width:130px"></span><span class="lbl">every 30s</span> for the next minute</div>
+      <div class="rung"><span class="bar" style="width:184px"></span><span class="lbl">every 60s</span> until the order expires at 20 minutes</div>
+    </div>
+    <p class="terminal-note">Polling stops the moment a terminal state arrives, whether from
+    the status API or a webhook. Nothing is polled after it is settled.</p>
+  </div>
+
+  <p>You do not need to build this yourself. It runs inside PayPe.</p>
+</section>
+
+<!-- ============ ERRORS ============ -->
+<section id="errors">
+  <h2>Errors</h2>
+  <p>Errors return a JSON body with an <span class="mono">error</span> field describing what
+  happened and, where useful, the values involved.</p>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Status</th><th>Meaning</th><th>What to do</th></tr></thead>
+      <tbody>
+        <tr><td><span class="mono">400</span></td><td>Invalid request — bad amount, missing field, refund over balance</td><td>Fix the request. Do not retry unchanged.</td></tr>
+        <tr><td><span class="mono">401</span></td><td>Signature missing or wrong</td><td>Check the key and how you sign the body.</td></tr>
+        <tr><td><span class="mono">403</span></td><td>Merchant suspended</td><td>Contact PayPe. Payments are blocked until reactivated.</td></tr>
+        <tr><td><span class="mono">404</span></td><td>Unknown merchant, order or refund</td><td>Check the identifier.</td></tr>
+        <tr><td><span class="mono">502</span></td><td>Gateway rejected or was unreachable</td><td>Retry with the same order ID, then check status.</td></tr>
+        <tr><td><span class="mono">503</span></td><td>PayPe could not verify records — refunds are blocked rather than risked</td><td>Retry shortly.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note info">
+    <span class="tag">Why 503 blocks refunds</span>
+    <p>If PayPe cannot read the refund history for an order, it cannot know how much is left
+    to refund — so it refuses instead of guessing. A failed refund is recoverable; an
+    over-refund is money gone.</p>
+  </div>
+</section>
+
+<!-- ============ TESTING ============ -->
+<section id="testing">
+  <h2>Test in sandbox</h2>
+  <p>Sandbox behaves like production but moves no real money. Use it to exercise every path
+  before you go live — especially the ones you hope never happen.</p>
+
+  <h3>Cases to cover</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Scenario</th><th>Expected result</th></tr></thead>
+      <tbody>
+        <tr><td>Successful UPI payment</td><td>Order reaches COMPLETED</td></tr>
+        <tr><td>Failed card payment</td><td>Order reaches FAILED, nothing shipped</td></tr>
+        <tr><td>Customer closes the tab mid-payment</td><td>Order stays PENDING, then resolves by reconciliation</td></tr>
+        <tr><td>Full refund</td><td>Refund COMPLETED, balance now zero</td></tr>
+        <tr><td>Partial refund, twice</td><td>Both succeed while the total stays within the original</td></tr>
+        <tr><td>Refund more than the balance</td><td>Rejected with the arithmetic returned</td></tr>
+        <tr><td>Duplicate webhook</td><td>Your handler processes the order once</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note build">
+    <span class="tag">Sandbox credentials</span>
+    <p>Test merchant IDs and keys are issued from your PayPe dashboard. Never put live
+    credentials in documentation, support tickets, or chat messages.</p>
+  </div>
+
+  <h3>Going live</h3>
+  <ol>
+    <li>Confirm your domain is registered against your merchant account.</li>
+    <li>Swap sandbox keys for live keys in your server environment.</li>
+    <li>Point your webhook URL at your production endpoint and verify signatures there.</li>
+    <li>Run one real payment of ₹1 and refund it, end to end.</li>
+  </ol>
+</section>
+
+<!-- ============ ROADMAP ============ -->
+<section id="roadmap">
+  <h2>Roadmap</h2>
+  <p>Documented here so you can plan. These are not available yet — do not build against
+  them.</p>
+
+  <div class="road">
+    <div class="road-item">
+      <span class="mini plan">Planned</span>
+      <div class="txt">
+        <h4>Payouts</h4>
+        <p>Send money to a bank account or UPI ID. Needed for marketplace sellers, refunds
+        outside the original payment, and vendor disbursement.</p>
+      </div>
+    </div>
+    <div class="road-item">
+      <span class="mini plan">Planned</span>
+      <div class="txt">
+        <h4>Virtual accounts</h4>
+        <p>A dedicated account number or UPI ID per customer, so incoming transfers reconcile
+        automatically against an invoice.</p>
+      </div>
+    </div>
+    <div class="road-item">
+      <span class="mini plan">Planned</span>
+      <div class="txt">
+        <h4>Static QR</h4>
+        <p>A printable QR for counters and storefronts, with the collection appearing in your
+        dashboard.</p>
+      </div>
+    </div>
+    <div class="road-item">
+      <span class="mini plan">Planned</span>
+      <div class="txt">
+        <h4>Settlement reports</h4>
+        <p>Daily settlement files showing gross collection, fees, refunds and the net amount
+        credited to your bank.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <p>PayPe Technologies Pvt. Ltd., Coimbatore, Tamil Nadu · CIN U74994TN2022PTC151114 ·
+  Support admin@paype.co.in · Payment processing by our gateway partner.</p>
+</footer>
+
+<script>
+  // --- Mobile nav ---
+  function toggleNav(){
+    document.getElementById("side").classList.toggle("open");
+  }
+  document.querySelectorAll(".side nav a").forEach(function(a){
+    a.addEventListener("click", function(){
+      if (window.innerWidth <= 900) document.getElementById("side").classList.remove("open");
+    });
+  });
+
+  // --- Copy buttons ---
+  function cp(btn){
+    var pre = btn.closest(".code").querySelector("pre");
+    navigator.clipboard.writeText(pre.innerText).then(function(){
+      var old = btn.textContent;
+      btn.textContent = "Copied";
+      setTimeout(function(){ btn.textContent = old; }, 1400);
+    });
+  }
+
+  // --- Paise converter ---
+  function conv(){
+    var r = parseFloat(document.getElementById("rs").value);
+    var out = document.getElementById("ps");
+    if (isNaN(r) || r < 0) { out.textContent = "—"; return; }
+    out.textContent = Math.round(r * 100).toLocaleString("en-IN");
+  }
+  conv();
+
+  // --- Highlight the section being read ---
+  var links = Array.prototype.slice.call(document.querySelectorAll(".side nav a"));
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      links.forEach(function(l){
+        l.classList.toggle("on", l.getAttribute("href") === "#" + e.target.id);
+      });
+    });
+  }, { rootMargin: "-88px 0px -70% 0px" });
+  document.querySelectorAll("section[id]").forEach(function(s){ obs.observe(s); });
+</script>
+</body>
+</html>

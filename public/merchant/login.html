@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign in · PayPe</title>
+<style>
+  :root{--ink:#16112E;--soft:#544D74;--faint:#8A83A6;--violet:#5B2EDD;--deep:#3E1FA0;
+        --mist:#F7F5FC;--rule:#E4DFF3;--green:#0B7C6E;--rose:#A81F2E;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--mist);color:var(--ink);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .card{background:#fff;border:1px solid var(--rule);border-radius:16px;width:100%;max-width:390px;
+    padding:36px 32px;box-shadow:0 12px 36px rgba(22,17,46,.08);}
+  .brand{font-size:25px;font-weight:800;color:var(--deep);letter-spacing:-.03em;}
+  .sub{font-size:13.5px;color:var(--soft);margin:3px 0 26px;}
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--soft);margin-bottom:6px;}
+  input{width:100%;border:1.5px solid var(--rule);border-radius:10px;padding:12px;
+    font-size:16px;outline:0;background:var(--mist);color:var(--ink);}
+  input:focus{border-color:var(--violet);background:#fff;}
+  #code{font-family:ui-monospace,monospace;letter-spacing:.34em;text-align:center;font-size:21px;}
+  button{width:100%;margin-top:20px;padding:14px;font-size:15px;font-weight:700;color:#fff;
+    background:var(--violet);border:0;border-radius:10px;cursor:pointer;}
+  button:hover{background:var(--deep);}
+  button:disabled{opacity:.55;cursor:default;}
+  .msg{margin-top:14px;font-size:13.5px;min-height:19px;line-height:1.5;}
+  .msg.err{color:var(--rose);} .msg.ok{color:var(--green);}
+  .back{background:none;color:var(--soft);font-weight:600;font-size:13px;margin-top:12px;padding:6px;}
+  .back:hover{background:none;color:var(--deep);}
+  .foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--rule);
+    font-size:12.5px;color:var(--faint);line-height:1.6;}
+  .hide{display:none;}
+  :focus-visible{outline:2.5px solid var(--violet);outline-offset:2px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">PayPe</div>
+
+  <!-- Step 1 -->
+  <div id="step1">
+    <p class="sub">Sign in to your merchant account</p>
+    <label for="contact">Registered email or mobile</label>
+    <input id="contact" autocomplete="username" inputmode="email" placeholder="you@yourbusiness.com" />
+    <button id="send" onclick="requestCode()">Send code</button>
+    <p class="msg" id="m1"></p>
+  </div>
+
+  <!-- Step 2 -->
+  <div id="step2" class="hide">
+    <p class="sub">Enter the 6-digit code we sent to <strong id="sentTo"></strong></p>
+    <label for="code">Sign-in code</label>
+    <input id="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" />
+    <button id="verify" onclick="verifyCode()">Sign in</button>
+    <button class="back" onclick="reset()">Use a different email or mobile</button>
+    <p class="msg" id="m2"></p>
+  </div>
+
+  <p class="foot">Codes expire in 10 minutes and work once.<br />
+  Trouble signing in? Write to admin@paype.co.in</p>
+</div>
+
+<script>
+var contactValue = "";
+
+function show(id, text, kind) {
+  var el = document.getElementById(id);
+  el.textContent = text || "";
+  el.className = "msg" + (kind ? " " + kind : "");
+}
+
+async function requestCode() {
+  var btn = document.getElementById("send");
+  contactValue = document.getElementById("contact").value.trim();
+  if (!contactValue) { show("m1", "Enter your registered email or mobile number", "err"); return; }
+
+  btn.disabled = true;
+  show("m1", "Sending…");
+  try {
+    var res = await fetch("/api/merchant/request-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contact: contactValue })
+    });
+    var data = await res.json();
+    if (res.ok) {
+      document.getElementById("sentTo").textContent = contactValue;
+      document.getElementById("step1").className = "hide";
+      document.getElementById("step2").className = "";
+      document.getElementById("code").focus();
+      show("m2", data.message || "", "ok");
+    } else {
+      show("m1", data.error || "Could not send a code", "err");
+    }
+  } catch (e) {
+    show("m1", "Could not reach PayPe. Check your connection.", "err");
+  }
+  btn.disabled = false;
+}
+
+async function verifyCode() {
+  var btn = document.getElementById("verify");
+  var code = document.getElementById("code").value.trim();
+  if (code.length !== 6) { show("m2", "Enter all six digits", "err"); return; }
+
+  btn.disabled = true;
+  show("m2", "Checking…");
+  try {
+    var res = await fetch("/api/merchant/verify-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contact: contactValue, code: code })
+    });
+    var data = await res.json();
+    if (res.ok) {
+      window.location.href = "/merchant/dashboard.html";
+      return;
+    }
+    show("m2", data.error || "That code is not valid", "err");
+  } catch (e) {
+    show("m2", "Could not reach PayPe. Check your connection.", "err");
+  }
+  btn.disabled = false;
+}
+
+function reset() {
+  document.getElementById("step2").className = "hide";
+  document.getElementById("step1").className = "";
+  document.getElementById("code").value = "";
+  show("m1", ""); show("m2", "");
+  document.getElementById("contact").focus();
+}
+
+document.getElementById("contact").addEventListener("keydown", function (e) {
+  if (e.key === "Enter") requestCode();
+});
+document.getElementById("code").addEventListener("keydown", function (e) {
+  if (e.key === "Enter") verifyCode();
+});
+</script>
+</body>
+</html>
