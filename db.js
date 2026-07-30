@@ -352,3 +352,56 @@ async function getPlatformOverview() {
   };
 }
 module.exports.getPlatformOverview = getPlatformOverview;
+
+function normalizeMode(raw) {
+  const m = String(raw || "UNKNOWN").toUpperCase();
+  if (m.includes("UPI")) return "UPI";
+  if (m.includes("CREDIT")) return "CREDIT_CARD";
+  if (m.includes("DEBIT")) return "DEBIT_CARD";
+  if (m.includes("CARD")) return "CARD";
+  if (m.includes("NET_BANKING") || m.includes("NETBANKING")) return "NET_BANKING";
+  if (m.includes("WALLET")) return "WALLET";
+  return "OTHER";
+}
+
+async function getReport(period, merchantId) {
+  const d = getDb();
+  if (!d) return null;
+  const now = new Date();
+  let rangeStart;
+  if (period === "yearly") rangeStart = new Date(now.getFullYear(), 0, 1).getTime();
+  else if (period === "monthly") rangeStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  else rangeStart = now.getTime() - 24 * 60 * 60 * 1000;
+  let query = d.collection("orders").where("createdAt", ">=", rangeStart);
+  if (merchantId) query = query.where("merchantId", "==", merchantId);
+  const snap = await query.orderBy("createdAt", "desc").limit(2000).get();
+  const orders = snap.docs.map((doc) => doc.data());
+  const completed = orders.filter((o) => o.state === "COMPLETED");
+  const byMode = {};
+  for (const o of completed) {
+    const mode = normalizeMode(o.paymentMode);
+    if (!byMode[mode]) byMode[mode] = { mode, amount: 0, count: 0 };
+    byMode[mode].amount += o.amount || 0;
+    byMode[mode].count += 1;
+  }
+  const byPaymentMethod = Object.values(byMode).sort((a, b) => b.amount - a.amount);
+  const buckets = {};
+  const bucketKey = (ts) => {
+    const dt = new Date(ts);
+    if (period === "yearly") return dt.toLocaleDateString("en-IN", { month: "short" });
+    if (period === "monthly") return String(dt.getDate());
+    return dt.toLocaleTimeString("en-IN", { hour: "2-digit", hour12: false }) + ":00";
+  };
+  for (const o of completed) {
+    const key = bucketKey(o.createdAt || rangeStart);
+    if (!buckets[key]) buckets[key] = { label: key, amount: 0, count: 0 };
+    buckets[key].amount += o.amount || 0;
+    buckets[key].count += 1;
+  }
+  return {
+    period, rangeStart,
+    totals: { orders: orders.length, completed: completed.length, failed: orders.filter((o) => o.state === "FAILED").length, pending: orders.filter((o) => o.state === "PENDING").length, volume: completed.reduce((s, o) => s + (o.amount || 0), 0) },
+    byPaymentMethod, timeline: Object.values(buckets),
+  };
+}
+module.exports.getReport = getReport;

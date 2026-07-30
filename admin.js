@@ -200,3 +200,13 @@ router.get("/api/admin/overview", requireAdmin, async (req, res) => {
     res.status(500).json({ error: "Could not load overview" });
   }
 });
+
+router.get("/api/admin/reports", requireAdmin, async (req, res) => {
+  try {
+    const period = ["daily", "monthly", "yearly"].includes(req.query.period) ? req.query.period : "monthly";
+    const merchantId = req.query.merchant || null;
+    const report = await db.getReport(period, merchantId);
+    if (!report) return res.status(503).json({ error: "Database unavailable" });
+    res.json({ report });
+  } catch (err) { res.status(500).json({ error: "Could not load report" }); }
+});
