@@ -405,3 +405,19 @@ async function getReport(period, merchantId) {
   };
 }
 module.exports.getReport = getReport;
+
+// ---- Platform settings (single document, admin-editable) ----
+const SETTINGS_DOC = "platform";
+async function getSettings() {
+  const d = getDb();
+  if (!d) return null;
+  const doc = await d.collection("settings").doc(SETTINGS_DOC).get();
+  return doc.exists ? doc.data() : {};
+}
+async function updateSettings(fields) {
+  const d = getDb();
+  if (!d) throw new Error("database unavailable");
+  await d.collection("settings").doc(SETTINGS_DOC).set({ ...fields, updatedAt: Date.now() }, { merge: true });
+}
+module.exports.getSettings = getSettings;
+module.exports.updateSettings = updateSettings;
