@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Overview · PayPe Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#140611; --panel:#1E0A1A; --panel-2:#260E21; --edge:#3A1730; --edge-lit:#5C2247;
+    --magenta:#DA0077; --magenta-lit:#FF3D95; --rose:#FF5C9E;
+    --teal:#3DD9A0; --teal-dim:#1F6B54; --amber:#F5B94A;
+    --bone:#FBF3F8; --ash:#A794A2; --ash-dim:#74606F;
+    --red:#FF6B7A; --red-bg:rgba(255,107,122,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--void);color:var(--bone);font-family:"Outfit",system-ui,sans-serif;
+    font-size:15px;line-height:1.55;font-weight:300;-webkit-font-smoothing:antialiased;}
+  h1,h2,.serif{font-family:"Playfair Display",Georgia,serif;font-weight:600;}
+  .mono{font-family:"IBM Plex Mono",monospace;}
+  a{color:var(--magenta-lit);text-decoration:none;}
+  header{background:var(--panel);border-bottom:1px solid var(--edge);padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10;}
+  .brand{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+  .logo{font-family:"Playfair Display",serif;font-weight:700;font-size:19px;color:var(--magenta-lit);}
+  nav{display:flex;gap:4px;}
+  nav a{padding:8px 13px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--ash);}
+  nav a:hover{background:var(--panel-2);color:var(--bone);}
+  nav a.on{background:rgba(218,0,119,.15);color:var(--magenta-lit);}
+  .logout{background:none;border:1px solid var(--edge);border-radius:8px;padding:8px 15px;
+    font-size:13px;font-weight:500;color:var(--ash);cursor:pointer;}
+  .logout:hover{border-color:var(--magenta);color:var(--magenta-lit);}
+  main{max-width:1080px;margin:0 auto;padding:26px 18px 70px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--magenta-lit);
+    letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;}
+  h1{font-size:28px;letter-spacing:-.02em;margin-bottom:22px;}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  .kpi{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:18px 20px;}
+  .kpi .n{font-family:"Playfair Display",serif;font-size:26px;font-weight:700;color:var(--bone);letter-spacing:-.02em;}
+  .kpi .l{font-size:12px;color:var(--ash);margin-top:3px;}
+  .kpi .delta{font-family:"IBM Plex Mono",monospace;font-size:11px;margin-top:8px;display:inline-block;
+    padding:2px 8px;border-radius:99px;}
+  .delta.up{background:rgba(61,217,160,.13);color:var(--teal);}
+  .delta.warn{background:var(--red-bg);color:var(--red);}
+  .delta.flat{background:rgba(167,148,162,.13);color:var(--ash);}
+  .grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:14px;}
+  .card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:22px;}
+  .card h2{font-size:16px;margin-bottom:4px;}
+  .card .sub{font-size:12.5px;color:var(--ash);margin-bottom:16px;}
+  .bars{display:flex;align-items:flex-end;gap:10px;height:160px;padding-top:10px;}
+  .barcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;}
+  .bar{width:100%;max-width:34px;border-radius:6px 6px 3px 3px;
+    background:linear-gradient(180deg,var(--magenta-lit),var(--magenta));transition:opacity .15s;}
+  .barcol:hover .bar{opacity:.85;}
+  .barcol .amt{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ash);}
+  .barcol .lbl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ash-dim);}
+  .donutwrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:center;}
+  .legend{display:flex;flex-direction:column;gap:10px;font-size:13px;}
+  .legend .row{display:flex;align-items:center;gap:8px;}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .legend .num{margin-left:auto;font-family:"IBM Plex Mono",monospace;color:var(--bone);padding-left:14px;}
+  .tablewrap{background:var(--panel);border:1px solid var(--edge);border-radius:14px;overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px;}
+  th{text-align:left;padding:12px 16px;border-bottom:1px solid var(--edge);color:var(--ash-dim);
+    font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;}
+  td{padding:11px 16px;border-bottom:1px solid #24101F;color:var(--ash);}
+  tr:last-child td{border-bottom:0;}
+  td.name{color:var(--bone);font-weight:500;}
+  .rank{font-family:"IBM Plex Mono",monospace;color:var(--magenta-lit);width:26px;display:inline-block;}
+  .empty{padding:30px;text-align:center;color:var(--ash-dim);font-size:13.5px;}
+  @media(max-width:820px){ .kpis{grid-template-columns:1fr 1fr;} .grid2{grid-template-columns:1fr;} }
+  @media(max-width:500px){ .kpis{grid-template-columns:1fr 1fr;} nav{display:none;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">PayPe Admin</div>
+    <nav>
+      <a href="/admin/overview.html" class="on">Overview</a>
+      <a href="/admin/dashboard.html">Transactions</a>
+      <a href="/admin/merchants.html">Merchants</a>
+      <a href="/admin/reports.html">Reports</a>
+      <a href="/admin/settings.html">Settings</a>
+    </nav>
+  </div>
+  <button class="logout" onclick="logout()">Log out</button>
+</header>
+<main>
+  <div class="eyebrow">Platform overview</div>
+  <h1>Every merchant, one view</h1>
+  <div class="kpis">
+    <div class="kpi"><div class="n" id="kMerchants">–</div><div class="l">Active merchants</div><span class="delta flat mono" id="kMerchantsSub"></span></div>
+    <div class="kpi"><div class="n" id="kVolume">–</div><div class="l">Total volume collected (₹)</div><span class="delta up mono" id="kVolumeSub"></span></div>
+    <div class="kpi"><div class="n" id="kToday">–</div><div class="l">Today's volume (₹)</div><span class="delta flat mono" id="kTodaySub"></span></div>
+    <div class="kpi"><div class="n" id="kFailed">–</div><div class="l">Failed transactions</div><span class="delta warn mono" id="kFailedSub"></span></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h2>Last 7 days</h2>
+      <div class="sub">Completed payment volume, per day</div>
+      <div class="bars" id="bars"></div>
+    </div>
+    <div class="card">
+      <h2>Order status</h2>
+      <div class="sub">All orders on the platform</div>
+      <div class="donutwrap">
+        <svg id="donut" width="140" height="140" viewBox="0 0 140 140"></svg>
+        <div class="legend" id="donutLegend"></div>
+      </div>
+    </div>
+  </div>
+  <h2 style="font-size:16px;margin:22px 0 12px">Top merchants by volume</h2>
+  <div class="tablewrap">
+    <table id="lbTable">
+      <thead><tr><th>#</th><th>Merchant</th><th>Payments</th><th>Volume (₹)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="empty" id="lbEmpty" style="display:none">No completed payments yet</div>
+  </div>
+</main>
+<script>
+const money = (paise) => ((paise||0)/100).toLocaleString("en-IN");
+function toLogin() { window.location.href = "/admin/login.html"; }
+async function load() {
+  const res = await fetch("/api/admin/overview");
+  if (res.status === 401) { toLogin(); return; }
+  if (!res.ok) { document.querySelector("main").innerHTML = "<p style='color:var(--ash)'>Could not load overview.</p>"; return; }
+  const { overview: o } = await res.json();
+  document.getElementById("kMerchants").textContent = o.merchants.active;
+  document.getElementById("kMerchantsSub").textContent = o.merchants.suspended + " suspended";
+  document.getElementById("kVolume").textContent = money(o.orders.volumeCompleted);
+  document.getElementById("kVolumeSub").textContent = o.orders.completed + " payments";
+  document.getElementById("kToday").textContent = money(o.today.volume);
+  document.getElementById("kTodaySub").textContent = o.today.completed + " today";
+  document.getElementById("kFailed").textContent = o.orders.failed;
+  document.getElementById("kFailedSub").textContent = o.orders.total + " total orders";
+  const bars = document.getElementById("bars");
+  const maxAmt = Math.max(...o.last7Days.map(d => d.amount), 1);
+  bars.innerHTML = o.last7Days.map(d => {
+    const h = Math.max(6, Math.round((d.amount / maxAmt) * 140));
+    return `<div class="barcol"><span class="amt">${d.count ? "₹" + money(d.amount) : ""}</span><div class="bar" style="height:${h}px"></div><span class="lbl">${d.label}</span></div>`;
+  }).join("");
+  const seg = [
+    { label: "Completed", value: o.orders.completed, color: "#3DD9A0" },
+    { label: "Pending",   value: o.orders.pending,   color: "#F5B94A" },
+    { label: "Failed",    value: o.orders.failed,    color: "#FF6B7A" },
+  ];
+  const total = seg.reduce((s, x) => s + x.value, 0) || 1;
+  const r = 55, cx = 70, cy = 70, circ = 2 * Math.PI * r;
+  let offset = 0;
+  const donut = document.getElementById("donut");
+  let svgParts = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2A0F24" stroke-width="18"/>`;
+  seg.forEach(s => {
+    const frac = s.value / total;
+    const len = frac * circ;
+    svgParts += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="18" stroke-dasharray="${len} ${circ - len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset += len;
+  });
+  donut.innerHTML = svgParts;
+  document.getElementById("donutLegend").innerHTML = seg.map(s =>
+    `<div class="row"><span class="dot" style="background:${s.color}"></span>${s.label}<span class="num">${s.value}</span></div>`
+  ).join("");
+  const body = document.querySelector("#lbTable tbody");
+  body.innerHTML = o.leaderboard.map((m, i) => `<tr>
+    <td><span class="rank">${i + 1}</span></td>
+    <td class="name">${m.businessName}</td>
+    <td>${m.count}</td>
+    <td>${money(m.amount)}</td>
+  </tr>`).join("");
+  document.getElementById("lbEmpty").style.display = o.leaderboard.length ? "none" : "block";
+}
+async function logout() { await fetch("/api/admin/logout", { method: "POST" }); toLogin(); }
+load();
+</script>
+</body>
+</html>
