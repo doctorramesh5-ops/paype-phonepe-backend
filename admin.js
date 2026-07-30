@@ -210,3 +210,43 @@ router.get("/api/admin/reports", requireAdmin, async (req, res) => {
     res.json({ report });
   } catch (err) { res.status(500).json({ error: "Could not load report" }); }
 });
+
+// ============ PLATFORM SETTINGS (admin only) ============
+const DEFAULT_SETTINGS = {
+  supportEmail: "admin@paype.co.in", supportPhone: "+91 99448 57191",
+  businessName: "PayPe Technologies Pvt. Ltd.",
+  businessAddress: "277/1A, Annamalai Industrial Park, Kalapatti, Coimbatore 641048, Tamil Nadu, India",
+  reconcileIntervalNote: "Every 1 minute via cron-job.org", maintenanceMode: false,
+};
+
+router.get("/api/admin/settings", requireAdmin, async (req, res) => {
+  try {
+    const stored = await db.getSettings();
+    res.json({ settings: { ...DEFAULT_SETTINGS, ...(stored || {}) } });
+  } catch (err) { res.status(500).json({ error: "Could not load settings" }); }
+});
+
+router.post("/api/admin/settings", requireAdmin, async (req, res) => {
+  try {
+    const allowed = ["supportEmail","supportPhone","businessName","businessAddress","maintenanceMode"];
+    const fields = {};
+    for (const key of allowed) if (req.body && req.body[key] !== undefined) fields[key] = req.body[key];
+    if (fields.supportEmail !== undefined) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(fields.supportEmail).trim())) return res.status(400).json({ error: "Enter a valid support email" });
+      fields.supportEmail = String(fields.supportEmail).trim().toLowerCase();
+    }
+    if (fields.maintenanceMode !== undefined) fields.maintenanceMode = Boolean(fields.maintenanceMode);
+    if (Object.keys(fields).length === 0) return res.status(400).json({ error: "Nothing to update" });
+    await db.updateSettings(fields);
+    console.log("⚙️  Platform settings updated:", Object.keys(fields).join(","));
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: "Could not update settings" }); }
+});
+
+router.get("/api/admin/account", requireAdmin, (req, res) => {
+  res.json({
+    username: process.env.ADMIN_USERNAME || null,
+    credentialSource: "environment variable (Vercel)",
+    passwordChangeable: false,
+  });
+});

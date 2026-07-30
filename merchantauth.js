@@ -291,3 +291,57 @@ router.get("/api/merchant/reports", requireMerchant, async (req, res) => {
     res.json({ report });
   } catch (err) { res.status(500).json({ error: "Could not load report" }); }
 });
+
+// ============ Merchant profile & settings ============
+router.get("/api/merchant/profile", requireMerchant, (req, res) => {
+  res.json({
+    merchantId: req.merchant.merchantId, businessName: req.merchant.businessName,
+    domain: req.merchant.domain, contactName: req.merchant.contactName || "",
+    email: req.merchant.email || "", phone: req.merchant.phone || "",
+    mid: req.merchant.mid, status: req.merchant.status, createdAt: req.merchant.createdAt,
+  });
+});
+
+router.post("/api/merchant/profile", requireMerchant, async (req, res) => {
+  try {
+    const { businessName, contactName, domain, phone } = req.body || {};
+    const fields = {};
+    if (businessName !== undefined) {
+      if (!businessName.trim()) return res.status(400).json({ error: "Business name cannot be empty" });
+      fields.businessName = businessName.trim();
+    }
+    if (contactName !== undefined) fields.contactName = contactName.trim();
+    if (phone !== undefined) fields.phone = phone.trim();
+    if (domain !== undefined) {
+      const d = domain.trim().replace(/\/+$/, "");
+      if (!/^https:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(d)) return res.status(400).json({ error: "Domain must be a valid https:// URL" });
+      fields.domain = d;
+    }
+    if (Object.keys(fields).length === 0) return res.status(400).json({ error: "Nothing to update" });
+    await db.updateMerchant(req.merchant.merchantId, fields);
+    console.log("✏️  Merchant updated own profile:", req.merchant.merchantId);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: "Could not update profile" }); }
+});
+
+router.post("/api/merchant/profile/email", requireMerchant, async (req, res) => {
+  try {
+    const email = String((req.body && req.body.email) || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "Enter a valid email address" });
+    const existing = await db.getMerchantByContact(email);
+    if (existing && existing.merchantId !== req.merchant.merchantId) return res.status(409).json({ error: "That email is already registered to another account" });
+    await db.updateMerchant(req.merchant.merchantId, { email });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: "Could not update email" }); }
+});
+
+router.post("/api/merchant/profile/phone", requireMerchant, async (req, res) => {
+  try {
+    const phone = String((req.body && req.body.phone) || "").trim();
+    if (phone.replace(/\D/g, "").length < 10) return res.status(400).json({ error: "Enter a valid mobile number" });
+    const existing = await db.getMerchantByContact(phone);
+    if (existing && existing.merchantId !== req.merchant.merchantId) return res.status(409).json({ error: "That mobile number is already registered to another account" });
+    await db.updateMerchant(req.merchant.merchantId, { phone });
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: "Could not update phone" }); }
+});
