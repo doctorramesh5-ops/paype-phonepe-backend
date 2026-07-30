@@ -198,7 +198,12 @@ app.post("/api/phonepe-webhook", async (req, res) => {
 
   try {
     if (event && event.startsWith("checkout.order") && payload.merchantOrderId) {
-      await db.updateOrder(payload.merchantOrderId, { state, lastWebhookEvent: event });
+      let paymentMode = null;
+      if (Array.isArray(payload.paymentDetails) && payload.paymentDetails.length) {
+        const match = payload.paymentDetails.find((p) => p.state === state) || payload.paymentDetails[payload.paymentDetails.length - 1];
+        paymentMode = match && match.paymentMode ? match.paymentMode : null;
+      }
+      await db.updateOrder(payload.merchantOrderId, { state, lastWebhookEvent: event, ...(paymentMode ? { paymentMode } : {}) });
     }
     if (event && event.startsWith("pg.refund") && payload.merchantRefundId) {
       await db.updateRefund(payload.merchantRefundId, { state, lastWebhookEvent: event });

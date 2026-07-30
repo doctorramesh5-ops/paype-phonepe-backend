@@ -178,3 +178,25 @@ router.post("/api/admin/keys/:keyId/revoke", requireAdmin, async (req, res) => {
 });
 
 module.exports.requireAdmin = requireAdmin;
+
+router.get("/api/admin/reports", requireAdmin, async (req, res) => {
+  try {
+    const period = ["daily", "monthly", "yearly"].includes(req.query.period) ? req.query.period : "monthly";
+    const merchantId = req.query.merchant || null;
+    const report = await db.getReport(period, merchantId);
+    if (!report) return res.status(503).json({ error: "Database unavailable" });
+    res.json({ report });
+  } catch (err) { res.status(500).json({ error: "Could not load report" }); }
+});
+
+// ============ PLATFORM OVERVIEW (admin CEO dashboard) ============
+router.get("/api/admin/overview", requireAdmin, async (req, res) => {
+  try {
+    const overview = await db.getPlatformOverview();
+    if (!overview) return res.status(503).json({ error: "Database unavailable" });
+    res.json({ overview });
+  } catch (err) {
+    console.error("❌ overview error:", err.message);
+    res.status(500).json({ error: "Could not load overview" });
+  }
+});

@@ -273,3 +273,12 @@ router.post("/api/merchant/keys/:keyId/revoke", requireMerchant, async (req, res
 
 module.exports = router;
 module.exports.requireMerchant = requireMerchant;
+
+router.get("/api/merchant/reports", requireMerchant, async (req, res) => {
+  try {
+    const period = ["daily", "monthly", "yearly"].includes(req.query.period) ? req.query.period : "monthly";
+    const report = await db.getReport(period, req.merchant.merchantId);
+    if (!report) return res.status(503).json({ error: "Database unavailable" });
+    res.json({ report });
+  } catch (err) { res.status(500).json({ error: "Could not load report" }); }
+});
