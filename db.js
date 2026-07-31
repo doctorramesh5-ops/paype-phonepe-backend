@@ -442,3 +442,11 @@ async function hardDeleteMerchant(merchantId) {
 
 module.exports.merchantHasOrders = merchantHasOrders;
 module.exports.hardDeleteMerchant = hardDeleteMerchant;
+
+// ---- Merchant pricing category ----
+async function setMerchantCategory(merchantId, category) {
+  const d = getDb();
+  if (!d) throw new Error("database unavailable");
+  await d.collection("merchants").doc(merchantId).set({ pricingCategory: category }, { merge: true });
+}
+module.exports.setMerchantCategory = setMerchantCategory;

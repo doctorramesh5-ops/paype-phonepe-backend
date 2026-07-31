@@ -4,6 +4,7 @@ const express = require("express");
 const crypto = require("crypto");
 const path = require("path");
 const db = require("./db");
+const pricing = require("./pricing");
 const admin = require("./admin");
 
 const app = express();

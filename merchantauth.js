@@ -345,3 +345,10 @@ router.post("/api/merchant/profile/phone", requireMerchant, async (req, res) => 
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: "Could not update phone" }); }
 });
+
+const pricing = require("./pricing");
+router.get("/api/merchant/pricing", requireMerchant, (req, res) => {
+  const category = req.merchant.pricingCategory || null;
+  if (!category) return res.json({ category: null, message: "Your pricing category has not been set yet. Contact PayPe support." });
+  res.json({ category, ...pricing.getRateCardForCategory(category) });
+});

@@ -323,3 +323,23 @@ router.delete("/api/admin/merchants/:merchantId", requireAdmin, async (req, res)
     res.status(500).json({ error: "Could not delete merchant" });
   }
 });
+
+const pricing = require("./pricing");
+
+router.post("/api/admin/merchants/:merchantId/category", requireAdmin, async (req, res) => {
+  try {
+    const merchant = await db.getMerchant(req.params.merchantId);
+    if (!merchant) return res.status(404).json({ error: "Merchant not found" });
+    const category = String((req.body && req.body.category) || "").toUpperCase();
+    if (!pricing.CATEGORIES.includes(category)) {
+      return res.status(400).json({ error: "Unknown category. Choose one of: " + pricing.CATEGORIES.join(", ") });
+    }
+    await db.setMerchantCategory(merchant.merchantId, category);
+    console.log("💰 Pricing category set:", merchant.merchantId, "→", category);
+    res.json({ ok: true, category });
+  } catch (err) { res.status(500).json({ error: "Could not set pricing category" }); }
+});
+
+router.get("/api/admin/pricing/ratecard", requireAdmin, (req, res) => {
+  res.json({ rateCard: pricing.getFullRateCard(), categories: pricing.CATEGORIES, categoryLabels: pricing.CATEGORY_LABELS });
+});
