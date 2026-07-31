@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Activation Pricing · PayPe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--void:#140611;--panel:#1E0A1A;--panel-2:#260E21;--edge:#3A1730;--edge-lit:#5C2247;--magenta:#DA0077;--magenta-lit:#FF3D95;--teal:#3DD9A0;--amber:#F5B94A;--bone:#FBF3F8;--ash:#A794A2;--ash-dim:#74606F;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--void);color:var(--bone);font-family:"Outfit",system-ui,sans-serif;font-size:15px;line-height:1.55;font-weight:300;-webkit-font-smoothing:antialiased;}
+  h1,h2{font-family:"Playfair Display",Georgia,serif;font-weight:600;}
+  a{color:var(--magenta-lit);text-decoration:none;}
+  header{background:var(--panel);border-bottom:1px solid var(--edge);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:10;}
+  .logo{font-family:"Playfair Display",serif;font-weight:700;font-size:19px;color:var(--magenta-lit);}
+  .backlink{font-size:13.5px;color:var(--ash);}
+  main{max-width:980px;margin:0 auto;padding:44px 18px 80px;}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--magenta-lit);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;text-align:center;}
+  h1{font-size:clamp(30px,4.8vw,42px);letter-spacing:-.02em;margin-bottom:12px;text-align:center;}
+  .lede{color:var(--ash);font-size:16px;text-align:center;max-width:58ch;margin:0 auto 46px;}
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .tier{background:var(--panel);border:1px solid var(--edge);border-radius:16px;padding:28px 26px;display:flex;flex-direction:column;position:relative;}
+  .tier.pick{border-color:var(--magenta);background:var(--panel-2);}
+  .pop{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(140deg,var(--magenta),var(--magenta-lit));color:#fff;font-size:11px;font-weight:700;padding:5px 15px;border-radius:99px;white-space:nowrap;}
+  .tname{font-family:"Playfair Display",serif;font-size:21px;font-weight:600;margin-bottom:4px;}
+  .tfor{color:var(--ash-dim);font-size:12.5px;margin-bottom:18px;line-height:1.5;}
+  .price{font-family:"Playfair Display",serif;font-size:36px;color:var(--bone);font-weight:700;letter-spacing:-.02em;}
+  .price .gst{font-family:"Outfit",sans-serif;font-size:12.5px;color:var(--teal);font-weight:500;display:block;margin-top:4px;}
+  ul{list-style:none;margin:22px 0 26px;flex:1;}
+  li{color:var(--ash);font-size:13.5px;padding-left:20px;position:relative;margin-bottom:10px;line-height:1.4;}
+  li:before{content:"✓";position:absolute;left:0;color:var(--teal);font-weight:700;}
+  .btn{background:var(--magenta);border:0;border-radius:10px;color:#fff;padding:13px;font-size:14px;font-weight:700;text-align:center;display:block;}
+  .btn:hover{background:#B8005F;}
+  .tier:not(.pick) .btn{background:transparent;border:1.5px solid var(--edge);color:var(--bone);}
+  .tier:not(.pick) .btn:hover{border-color:var(--magenta);color:var(--magenta-lit);}
+  .note{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:22px 24px;margin-top:40px;font-size:13.5px;color:var(--ash);line-height:1.7;}
+  .note h3{color:var(--bone);font-size:14px;font-weight:600;margin-bottom:8px;font-family:"Outfit",sans-serif;}
+  @media(max-width:820px){ .tiers{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">PayPe</div>
+  <a class="backlink" href="/">← Back to PayPe</a>
+</header>
+<main>
+  <div class="eyebrow">Get started</div>
+  <h1>One-time activation, then you're live</h1>
+  <p class="lede">A single setup fee gets your business fully onboarded onto PayPe's payment gateway — UPI, cards and net banking, ready to accept payments.</p>
+  <div class="tiers">
+    <div class="tier pick">
+      <span class="pop">Most businesses</span>
+      <div class="tname">Standard</div>
+      <div class="tfor">E-Commerce · Hotel · Travel · NGO · Education · Grocery · Government</div>
+      <div class="price">₹4,999<span class="gst">Inclusive of GST</span></div>
+      <ul>
+        <li>UPI, Cards &amp; Net Banking enabled</li>
+        <li>Live production credentials</li>
+        <li>Merchant dashboard access</li>
+        <li>Refund &amp; reconciliation tools</li>
+        <li>Email support</li>
+      </ul>
+      <a class="btn" href="mailto:admin@paype.co.in?subject=Activate%20PayPe%20-%20Standard">Get activated</a>
+    </div>
+    <div class="tier">
+      <div class="tname">NBFC</div>
+      <div class="tfor">Lending &amp; non-banking financial companies</div>
+      <div class="price">₹9,999<span class="gst">Inclusive of GST</span></div>
+      <ul>
+        <li>Everything in Standard</li>
+        <li>NBFC-compliant transaction flows</li>
+        <li>Priority onboarding review</li>
+        <li>Dedicated support contact</li>
+      </ul>
+      <a class="btn" href="mailto:admin@paype.co.in?subject=Activate%20PayPe%20-%20NBFC">Get activated</a>
+    </div>
+    <div class="tier">
+      <div class="tname">B2B</div>
+      <div class="tfor">Business-to-business transactions</div>
+      <div class="price">₹14,999<span class="gst">Inclusive of GST</span></div>
+      <ul>
+        <li>Everything in Standard</li>
+        <li>Higher transaction value support</li>
+        <li>Custom settlement cycle discussion</li>
+        <li>Dedicated support contact</li>
+      </ul>
+      <a class="btn" href="mailto:admin@paype.co.in?subject=Activate%20PayPe%20-%20B2B">Get activated</a>
+    </div>
+  </div>
+  <div class="note">
+    <h3>How activation works</h3>
+    <p>Pay the one-time activation fee for your category, and our team reviews your business details. Once approved, you'll receive your live production credentials and can start accepting payments through PayPe. Write to <a href="mailto:admin@paype.co.in">admin@paype.co.in</a> with your business name and category to begin.</p>
+  </div>
+</main>
+</body>
+</html>
