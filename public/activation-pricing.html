@@ -141,13 +141,13 @@ async function proceedToPay(gateway) {
   const payload = { tier: currentTier, businessName: business, contactName: document.getElementById("fContact").value.trim(), email: email, phone: document.getElementById("fPhone").value.trim() };
   try {
     if (gateway === "PHONEPE") {
-      const res = await fetch("/api/activation/create-phonepe-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const res = await fetch("https://api.paype.co.in/api/activation/create-phonepe-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) { msg.textContent = data.error || "Could not start payment."; btnRP.disabled = false; btnPP.disabled = false; return; }
       window.location.href = data.redirectUrl;
       return;
     }
-    const res = await fetch("/api/activation/create-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const res = await fetch("https://api.paype.co.in/api/activation/create-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const data = await res.json();
     if (!res.ok) { msg.textContent = data.error || "Could not start payment."; btnRP.disabled = false; btnPP.disabled = false; return; }
     closeModal();
@@ -156,7 +156,7 @@ async function proceedToPay(gateway) {
       name: "PayPe Technologies", description: TIER_INFO[currentTier].label + " activation",
       prefill: { name: data.businessName, email: data.email, contact: data.phone }, theme: { color: "#DA0077" },
       handler: async function (response) {
-        const verifyRes = await fetch("/api/activation/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature }) });
+        const verifyRes = await fetch("https://api.paype.co.in/api/activation/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature }) });
         if (verifyRes.ok) alert("Payment successful! We will email your live PayPe credentials within 1 business day.");
         else alert("Payment received but could not be verified. Contact admin@paype.co.in with your payment ID: " + response.razorpay_payment_id);
       },
