@@ -114,7 +114,23 @@ router.post("/api/admin/merchants", requireAdmin, async (req, res) => {
     };
     await db.saveMerchant(merchant);
     console.log("🏪 Merchant onboarded:", merchantId, merchant.businessName);
-    res.json({ ok: true, merchant });
+
+    // If this business already paid an activation fee under this email,
+    // link that payment to their new merchant account so it shows up
+    // on their own profile page.
+    let linkedActivation = null;
+    if (merchant.email) {
+      try {
+        linkedActivation = await db.linkActivationToMerchant(merchant.email, merchantId);
+        if (linkedActivation) {
+          console.log("🔗 Linked activation payment to merchant:", merchantId, "←", linkedActivation.receiptId);
+        }
+      } catch (linkErr) {
+        console.error("⚠️  activation link failed (non-fatal):", linkErr.message);
+      }
+    }
+
+    res.json({ ok: true, merchant, linkedActivation: linkedActivation ? { receiptId: linkedActivation.receiptId, tier: linkedActivation.tier } : null });
   } catch (err) {
     console.error("❌ create merchant error:", err.message);
     res.status(500).json({ error: err.message });
