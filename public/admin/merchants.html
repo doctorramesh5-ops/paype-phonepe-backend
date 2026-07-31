@@ -214,6 +214,18 @@ async function setCategoryDirect(id, category) {
   if (!res.ok) { alert(data.error || "Could not set category"); load(); }
 }
 
+async function deleteMerchant(id, name) {
+  if (!confirm("Delete " + name + "?\n\nIf they have no payment history, they are removed completely.\nIf they have payments or refunds, their account is hidden but that history is kept for records.")) return;
+  const res = await fetch("/api/admin/merchants/" + id, { method: "DELETE" });
+  const data = await res.json();
+  if (res.ok) {
+    alert(data.mode === "deleted" ? "Merchant removed completely." : "Merchant hidden. Their transaction history is preserved.");
+    load();
+  } else {
+    alert(data.error || "Could not delete merchant");
+  }
+}
+
 async function editContact(id, currentPhone, currentEmail) {
   const phone = prompt("Mobile number for this merchant (used for SMS sign-in):", currentPhone || "");
   if (phone === null) return;
