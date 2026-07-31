@@ -12,9 +12,28 @@ const GST_RATE = 0.18;
 function amountWithGst(basePaise) { return Math.round(basePaise * (1 + GST_RATE)); }
 function razorpayConfigured() { return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET); }
 
+const ALLOWED_ORIGINS = new Set([
+  "https://pg.paype.co.in",
+  "https://paype.co.in",
+  "https://www.paype.co.in",
+  "https://api.paype.co.in",
+]);
+
+function corsMiddleware(req, res, next) {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+}
+
 module.exports = function activation(gw) {
   const { getAuthToken, tspHeaders, baseUrl } = gw;
   const router = express.Router();
+  router.use(corsMiddleware);
 
   router.post("/api/activation/create-order", async (req, res) => {
     try {
