@@ -45,7 +45,15 @@
     font-size:12px; cursor:pointer; color:#59527A;}
   .toggle:hover{border-color:var(--violet); color:var(--violet-dark);}
   .empty{padding:24px; text-align:center; color:#7A7396; font-size:13px;}
-</style>
+
+  .actions-cell{display:flex;flex-direction:column;gap:6px;min-width:150px;}
+  .actions-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .cat-select{background:var(--void);border:1px solid var(--edge);border-radius:7px;
+    color:var(--bone);font-size:12px;font-family:"Outfit",sans-serif;padding:6px 8px;
+    cursor:pointer;width:100%;}
+  .cat-select:focus{border-color:var(--magenta);outline:0;}
+  .btn-danger{color:var(--red)!important;}
+  </style>
 </head>
 <body>
 <header>
@@ -171,6 +179,17 @@ async function editCategory(id, current) {
   });
   const data = await res.json();
   if (res.ok) { load(); } else { alert(data.error || "Could not set category"); }
+}
+
+async function setCategoryDirect(id, category) {
+  if (!category) return;
+  const res = await fetch("/api/admin/merchants/" + id + "/category", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ category: category }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(data.error || "Could not set category"); load(); }
 }
 
 async function editContact(id, currentPhone, currentEmail) {
