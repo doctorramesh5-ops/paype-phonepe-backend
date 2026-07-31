@@ -53,6 +53,28 @@
     cursor:pointer;width:100%;}
   .cat-select:focus{border-color:var(--magenta);outline:0;}
   .btn-danger{color:var(--red)!important;}
+  
+  #tbl, table#tbl{table-layout:fixed;width:100%;min-width:0;}
+  #tbl th:nth-child(1),#tbl td:nth-child(1){width:13%;}
+  #tbl th:nth-child(2),#tbl td:nth-child(2){width:16%;}
+  #tbl th:nth-child(3),#tbl td:nth-child(3){width:8%;}
+  #tbl th:nth-child(4),#tbl td:nth-child(4){width:16%;}
+  #tbl th:nth-child(5),#tbl td:nth-child(5){width:16%;}
+  #tbl th:nth-child(6),#tbl td:nth-child(6){width:8%;}
+  #tbl th:nth-child(7),#tbl td:nth-child(7){width:9%;}
+  #tbl th:nth-child(8),#tbl td:nth-child(8){width:14%;}
+  #tbl td{padding:9px 8px;font-size:12px;}
+  #tbl th{padding:9px 8px;font-size:9.5px;}
+  .truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:100%;}
+  .actions-cell{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .actions-row{display:flex;gap:4px;flex-wrap:wrap;}
+  .actions-row .toggle{padding:4px 7px;font-size:10.5px;flex:1;min-width:0;text-align:center;}
+  .cat-select{font-size:10.5px;padding:5px 6px;}
+  .tablewrap{overflow-x:visible;}
+  @media(max-width:900px){
+    #tbl{table-layout:auto;min-width:640px;}
+    .tablewrap{overflow-x:auto;}
+  }
   </style>
 </head>
 <body>
@@ -119,13 +141,13 @@ function render() {
     <td>${m.merchantId}</td>
     <td><strong>${m.businessName}</strong></td>
     <td>${m.mid}</td>
-    <td>${m.domain}</td>
+    <td><span class="truncate" title="${m.domain}">${m.domain}</span></td>
     <td>${m.contactName || "—"}${m.email ? "<br><span style='color:#7A7396;font-size:11px'>" + m.email + "</span>" : ""}</td>
     <td><span class="chip ${m.status}">${m.status}</span></td>
     <td>${fmtTime(m.createdAt)}</td>
-    <td><button class="toggle" onclick="editContact('${m.merchantId}','${m.phone||""}','${m.email||""}')">Edit phone</button>
+    <td><button class="toggle" onclick="editContact('${m.merchantId}','${m.phone||""}','${m.email||""}')">Edit</button>
       <button class="toggle" onclick="editCategory('${m.merchantId}','${m.pricingCategory||""}')">${m.pricingCategory || "Set category"}</button>
-      <button class="toggle" onclick="deleteMerchant('${m.merchantId}','${m.businessName.replace(/'/g,"")}')" style="color:#B3261E">Delete</button>
+      <button class="toggle" onclick="deleteMerchant('${m.merchantId}','${m.businessName.replace(/'/g,"")}')" style="color:#B3261E">Del</button>
       <button class="toggle" onclick="toggleStatus('${m.merchantId}','${m.status}')">
       ${m.status === "ACTIVE" ? "Suspend" : "Activate"}</button></td>
   </tr>`).join("");
