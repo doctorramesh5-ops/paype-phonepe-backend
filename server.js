@@ -319,6 +319,10 @@ app.get("/api/refund-status/:merchantRefundId", async (req, res) => {
 // ---- Merchant portal (OTP login) ----
 app.use(require("./merchantauth"));
 
+// ---- PG activation payments (Razorpay + PhonePe) ----
+const activation = require("./activation");
+app.use(activation({ getAuthToken, tspHeaders, baseUrl: PHONEPE_BASE_URL }));
+
 // ---- Authenticated merchant API (v1) ----
 const merchantApi = require("./merchantapi");
 app.use(merchantApi({ getAuthToken, tspHeaders, baseUrl: PHONEPE_BASE_URL }));

@@ -343,3 +343,13 @@ router.post("/api/admin/merchants/:merchantId/category", requireAdmin, async (re
 router.get("/api/admin/pricing/ratecard", requireAdmin, (req, res) => {
   res.json({ rateCard: pricing.getFullRateCard(), categories: pricing.CATEGORIES, categoryLabels: pricing.CATEGORY_LABELS });
 });
+
+router.get("/api/admin/activations", requireAdmin, async (req, res) => {
+  try {
+    const activations = await db.getActivations(100);
+    res.json({ activations });
+  } catch (err) {
+    console.error("❌ list activations error:", err.message);
+    res.status(500).json({ error: "Could not load activations" });
+  }
+});
