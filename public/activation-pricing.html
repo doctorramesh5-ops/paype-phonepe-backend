@@ -39,6 +39,7 @@
   .note h3{color:var(--bone);font-size:14px;font-weight:600;margin-bottom:8px;font-family:"Outfit",sans-serif;}
   @media(max-width:820px){ .tiers{grid-template-columns:1fr;} }
 </style>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 <header>
@@ -62,7 +63,7 @@
         <li>Refund &amp; reconciliation tools</li>
         <li>Email support</li>
       </ul>
-      <a class="btn" href="mailto:admin@paype.co.in?subject=Activate%20PayPe%20-%20Standard">Get activated</a>
+      <button class="btn" onclick="startActivation('STANDARD')" style="width:100%;border:0;cursor:pointer;font-family:inherit;">Get activated</button>
     </div>
     <div class="tier">
       <div class="tname">NBFC</div>
@@ -74,7 +75,7 @@
         <li>Priority onboarding review</li>
         <li>Dedicated support contact</li>
       </ul>
-      <a class="btn" href="mailto:admin@paype.co.in?subject=Activate%20PayPe%20-%20NBFC">Get activated</a>
+      <button class="btn" onclick="startActivation('NBFC')" style="width:100%;border:0;cursor:pointer;font-family:inherit;">Get activated</button>
     </div>
     <div class="tier">
       <div class="tname">B2B</div>
@@ -86,7 +87,7 @@
         <li>Custom settlement cycle discussion</li>
         <li>Dedicated support contact</li>
       </ul>
-      <a class="btn" href="mailto:admin@paype.co.in?subject=Activate%20PayPe%20-%20B2B">Get activated</a>
+      <button class="btn" onclick="startActivation('B2B')" style="width:100%;border:0;cursor:pointer;font-family:inherit;">Get activated</button>
     </div>
   </div>
   <div class="note">
@@ -95,5 +96,75 @@
     <p>Pay the one-time activation fee for your category, and our team reviews your business details. Once approved, you'll receive your live production credentials and can start accepting payments through PayPe. Write to <a href="mailto:admin@paype.co.in">admin@paype.co.in</a> with your business name and category to begin.</p>
   </div>
 </main>
+
+<div id="modalBack" style="display:none;position:fixed;inset:0;background:rgba(20,6,17,.7);z-index:90;padding:20px;overflow-y:auto;align-items:center;justify-content:center;">
+  <div style="background:var(--panel);border:1px solid var(--edge);border-radius:16px;max-width:440px;width:100%;padding:28px;">
+    <h2 style="font-size:20px;margin-bottom:4px;" id="modalTitle">Activate PayPe</h2>
+    <p style="color:var(--ash);font-size:13px;margin-bottom:20px;" id="modalPrice"></p>
+    <label style="display:block;font-size:12.5px;font-weight:600;color:var(--ash);margin-bottom:5px;">Business name *</label>
+    <input id="fBusiness" style="width:100%;border:1.5px solid var(--edge);border-radius:9px;padding:11px 12px;background:var(--void);color:var(--bone);font-size:14px;outline:0;margin-bottom:14px;" />
+    <label style="display:block;font-size:12.5px;font-weight:600;color:var(--ash);margin-bottom:5px;">Contact person</label>
+    <input id="fContact" style="width:100%;border:1.5px solid var(--edge);border-radius:9px;padding:11px 12px;background:var(--void);color:var(--bone);font-size:14px;outline:0;margin-bottom:14px;" />
+    <label style="display:block;font-size:12.5px;font-weight:600;color:var(--ash);margin-bottom:5px;">Email *</label>
+    <input id="fEmail" type="email" style="width:100%;border:1.5px solid var(--edge);border-radius:9px;padding:11px 12px;background:var(--void);color:var(--bone);font-size:14px;outline:0;margin-bottom:14px;" />
+    <label style="display:block;font-size:12.5px;font-weight:600;color:var(--ash);margin-bottom:5px;">Mobile</label>
+    <input id="fPhone" style="width:100%;border:1.5px solid var(--edge);border-radius:9px;padding:11px 12px;background:var(--void);color:var(--bone);font-size:14px;outline:0;margin-bottom:18px;" />
+    <label style="display:block;font-size:12.5px;font-weight:600;color:var(--ash);margin-bottom:8px;">Choose payment method</label>
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <button id="payBtnRP" onclick="proceedToPay('RAZORPAY')" style="flex:1;background:var(--magenta);border:0;border-radius:10px;color:#fff;padding:13px 8px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;">Pay with Razorpay</button>
+      <button id="payBtnPP" onclick="proceedToPay('PHONEPE')" style="flex:1;background:#5F259F;border:0;border-radius:10px;color:#fff;padding:13px 8px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;">Pay with PhonePe</button>
+    </div>
+    <button onclick="closeModal()" style="width:100%;background:none;border:1.5px solid var(--edge);border-radius:10px;color:var(--ash);padding:11px;font-size:13px;cursor:pointer;font-family:inherit;">Cancel</button>
+    <p id="modalMsg" style="color:#FF6B7A;font-size:13px;margin-top:12px;min-height:16px;"></p>
+  </div>
+</div>
+<script>
+const TIER_INFO = { STANDARD: { label: "Standard", price: "₹4,999 + 18% GST" }, NBFC: { label: "NBFC", price: "₹9,999 + 18% GST" }, B2B: { label: "B2B", price: "₹14,999 + 18% GST" } };
+let currentTier = null;
+function startActivation(tier) {
+  currentTier = tier;
+  document.getElementById("modalTitle").textContent = "Activate PayPe — " + TIER_INFO[tier].label;
+  document.getElementById("modalPrice").textContent = TIER_INFO[tier].price;
+  document.getElementById("modalMsg").textContent = "";
+  document.getElementById("modalBack").style.display = "flex";
+}
+function closeModal() { document.getElementById("modalBack").style.display = "none"; }
+async function proceedToPay(gateway) {
+  const business = document.getElementById("fBusiness").value.trim();
+  const email = document.getElementById("fEmail").value.trim();
+  const msg = document.getElementById("modalMsg");
+  if (!business || !email) { msg.textContent = "Business name and email are required."; return; }
+  const btnRP = document.getElementById("payBtnRP");
+  const btnPP = document.getElementById("payBtnPP");
+  btnRP.disabled = true; btnPP.disabled = true;
+  msg.textContent = "Starting payment…";
+  const payload = { tier: currentTier, businessName: business, contactName: document.getElementById("fContact").value.trim(), email: email, phone: document.getElementById("fPhone").value.trim() };
+  try {
+    if (gateway === "PHONEPE") {
+      const res = await fetch("/api/activation/create-phonepe-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) { msg.textContent = data.error || "Could not start payment."; btnRP.disabled = false; btnPP.disabled = false; return; }
+      window.location.href = data.redirectUrl;
+      return;
+    }
+    const res = await fetch("/api/activation/create-order", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) { msg.textContent = data.error || "Could not start payment."; btnRP.disabled = false; btnPP.disabled = false; return; }
+    closeModal();
+    const rzp = new Razorpay({
+      key: data.keyId, amount: data.amountPaise, currency: data.currency, order_id: data.orderId,
+      name: "PayPe Technologies", description: TIER_INFO[currentTier].label + " activation",
+      prefill: { name: data.businessName, email: data.email, contact: data.phone }, theme: { color: "#DA0077" },
+      handler: async function (response) {
+        const verifyRes = await fetch("/api/activation/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature }) });
+        if (verifyRes.ok) alert("Payment successful! We will email your live PayPe credentials within 1 business day.");
+        else alert("Payment received but could not be verified. Contact admin@paype.co.in with your payment ID: " + response.razorpay_payment_id);
+      },
+      modal: { ondismiss: function () { btnRP.disabled = false; btnPP.disabled = false; } },
+    });
+    rzp.open();
+  } catch (e) { msg.textContent = "Could not reach PayPe. Please try again."; btnRP.disabled = false; btnPP.disabled = false; }
+}
+</script>
 </body>
 </html>
