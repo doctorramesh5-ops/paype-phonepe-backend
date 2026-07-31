@@ -116,6 +116,7 @@ function render() {
     <td><span class="chip ${m.status}">${m.status}</span></td>
     <td>${fmtTime(m.createdAt)}</td>
     <td><button class="toggle" onclick="editContact('${m.merchantId}','${m.phone||""}','${m.email||""}')">Edit phone</button>
+      <button class="toggle" onclick="editCategory('${m.merchantId}','${m.pricingCategory||""}')">${m.pricingCategory || "Set category"}</button>
       <button class="toggle" onclick="deleteMerchant('${m.merchantId}','${m.businessName.replace(/'/g,"")}')" style="color:#B3261E">Delete</button>
       <button class="toggle" onclick="toggleStatus('${m.merchantId}','${m.status}')">
       ${m.status === "ACTIVE" ? "Suspend" : "Activate"}</button></td>
@@ -152,6 +153,24 @@ async function addMerchant() {
     msg.className = "msg err"; msg.textContent = "Could not reach the server";
   }
   btn.disabled = false;
+}
+
+async function editCategory(id, current) {
+  const options = ["ECOM","EDUCATION","GROCERY","GOVT","NBFC","B2B"];
+  const labels = { ECOM:"E-Com/Hotel/Travel/NGO", EDUCATION:"Education", GROCERY:"Grocery", GOVT:"Government", NBFC:"NBFC (Lending)", B2B:"B2B" };
+  const list = options.map((o,i) => (i+1) + ". " + labels[o]).join("\n");
+  const choice = prompt("Choose a pricing category by number:\n\n" + list + "\n\nCurrent: " + (current || "none"), "");
+  if (choice === null) return;
+  const idx = parseInt(choice, 10) - 1;
+  if (idx < 0 || idx >= options.length) { alert("Enter a number from 1 to " + options.length); return; }
+  const category = options[idx];
+  const res = await fetch("/api/admin/merchants/" + id + "/category", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ category: category }),
+  });
+  const data = await res.json();
+  if (res.ok) { load(); } else { alert(data.error || "Could not set category"); }
 }
 
 async function editContact(id, currentPhone, currentEmail) {
